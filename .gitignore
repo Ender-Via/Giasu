@@ -78,6 +78,3 @@ Logs/
 ~$*
 *.docx
 .postman/
-
-# Thư mục tạm hoặc tài liệu tham khảo ngoài — không đưa vào repo
-docs_thamkhao/
