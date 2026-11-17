@@ -31,5 +31,4 @@ cd frontend && npm run lint && npm run build
 - Không thêm package mới, không sửa `docs/` khi người dùng chưa yêu cầu.
 - Không commit secret; không `git push --force`, `git reset --hard` trên nhánh đã push.
 - Không tự thêm trạng thái ngoài danh sách ở `docs/business/business-rules.md` §2 (D32).
-- Không đưa `docs_thamkhao/` (tài liệu dự án khác) vào repo.
 - Commit message không thêm dòng attribution của AI.

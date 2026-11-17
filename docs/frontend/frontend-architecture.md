@@ -3,8 +3,7 @@
 ## 0. Về tài liệu này
 
 Frontend được tổ chức thế nào: công nghệ, thư mục, routing và chặn quyền, cách lấy dữ liệu, state,
-xác thực, biến môi trường và cách chạy. Khung frontend chép từ dự án Nhà trẻ (cùng
-phiên bản thư viện) rồi đổi sang 3 vai trò `Admin`, `Tutor`, `Parent`.
+xác thực, biến môi trường và cách chạy cho 3 vai trò `Admin`, `Tutor`, `Parent`.
 
 | Tài liệu | Trả lời câu hỏi |
 | :---- | :---- |
