@@ -1,19 +1,19 @@
 # Người duyệt bắt buộc cho từng phần của repo. Quy tắc khớp SAU CÙNG được áp dụng.
-# THAY các username giả bên dưới bằng username GitHub thật trước khi bật branch protection.
-#   SV1 Lộc       — Lead (nhóm trưởng) + Backend  → @sv1-lead
-#   SV2 Trí Kiệt  — GitHub owner + Frontend       → @sv2-github-owner
-#   SV3 Lân       — Backend + Database            → @sv3-be-db
-#   SV4 Anh Kiệt  — Frontend + Testing            → @sv4-fe-test
+# Username GitHub của từng thành viên ở bảng dưới.
+#   SV1 Lộc       — Lead (nhóm trưởng) + Backend  → @loctq-vn
+#   SV2 Trí Kiệt  — GitHub owner + Frontend       → @Ender-Via
+#   SV3 Lân       — Backend + Database            → @LanTran0901
+#   SV4 Anh Kiệt  — Frontend + Testing            → @anhkietbienhoa-crypto
 
 # Mặc định (README, .gitignore, file ở gốc): GitHub owner
-*                         @sv2-github-owner
+*                         @Ender-Via
 
-/backend/                 @sv1-lead @sv3-be-db
-/backend/**/Migrations/   @sv3-be-db @sv1-lead
-/backend/GiaSu.Tests/     @sv4-fe-test @sv1-lead @sv3-be-db
-/frontend/                @sv2-github-owner @sv4-fe-test
+/backend/                 @loctq-vn @LanTran0901
+/backend/**/Migrations/   @LanTran0901 @loctq-vn
+/backend/GiaSu.Tests/     @anhkietbienhoa-crypto @loctq-vn @LanTran0901
+/frontend/                @Ender-Via @anhkietbienhoa-crypto
 
 # Tài liệu, quy trình, CI: chỉ GitHub owner (D02)
-/docs/                    @sv2-github-owner
-/.github/                 @sv2-github-owner
-/CLAUDE.md                @sv2-github-owner
+/docs/                    @Ender-Via
+/.github/                 @Ender-Via
+/CLAUDE.md                @Ender-Via
