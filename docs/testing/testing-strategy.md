@@ -3,8 +3,7 @@
 ## 0. Về tài liệu này
 
 Kiểm gì, bằng gì, ca kiểm bám vào mã nào, dữ liệu test lấy ở đâu, phải kiểm gì trước khi mở hay
-duyệt PR. SV4 giữ file này (thẻ S02-09); khung dưới đây lấy từ dự án Nhà trẻ, thêm phần xUnit mà
-bên đó chưa có.
+duyệt PR. SV4 giữ file này (thẻ S02-09).
 
 ### 0.1 Các loại kiểm thử
 

@@ -16,7 +16,7 @@ sửa mâu thuẫn trong biểu mẫu; mỗi quyết định đó được ghi t
 Khối đơn (monolith) **phân 4 lớp**: `Domain` ← `Application` ← `Infrastructure`, `API`.
 Phụ thuộc đi một chiều; `Domain` không tham chiếu lớp nào. Frontend tách riêng, chỉ nói chuyện
 với backend qua REST API.
-- Lý do: đủ tách trách nhiệm cho môn OOAD, dễ học, dễ test; nhóm đã chạy mô hình này ở dự án Nhà trẻ.
+- Lý do: đủ tách trách nhiệm cho môn OOAD, dễ học, dễ test; nhóm đã quen thuộc mô hình này.
 - Đánh đổi: không scale độc lập từng phần.
 
 ### D02 — Repo và tài liệu
