@@ -70,8 +70,8 @@ export function addDaysToDateString(dateStr: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-// Ngày thứ Hai của tuần chứa dateStr (yyyy-MM-dd). Tuần tính từ thứ Hai tới Chủ nhật, khớp weekStartDate
-// của thực đơn tuần. getUTCDay(): 0 = Chủ nhật ... 6 = thứ Bảy
+// Ngày thứ Hai của tuần chứa dateStr (yyyy-MM-dd). Tuần tính từ thứ Hai tới Chủ nhật, khớp
+// kế hoạch theo tuần (RoadmapPlanItem). getUTCDay(): 0 = Chủ nhật ... 6 = thứ Bảy
 export function getMondayOfWeek(dateStr: string): string {
   const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
   return addDaysToDateString(dateStr, -((day + 6) % 7));
@@ -131,11 +131,6 @@ export function formatVietnamDateFromUtc(utcIso: string): string {
   } catch {
     return utcIso;
   }
-}
-
-// Định dạng thời điểm đo theo giờ Việt Nam: dd/MM/yyyy HH:mm (ui-screens.md §4.4, frontend-conventions.md §6)
-export function formatMeasurementDateTime(utcDateStr: string): string {
-  return formatVietnamDateTime(utcDateStr);
 }
 
 // Định dạng thời điểm chung theo giờ Việt Nam: dd/MM/yyyy HH:mm (ui-screens.md §4.4, frontend-conventions.md §6)

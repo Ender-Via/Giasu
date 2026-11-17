@@ -2,8 +2,8 @@
 
 ## 0. Về tài liệu này
 
-Cách viết code frontend để mọi màn hình theo cùng một khuôn. Phần lớn quy ước lấy từ dự án Nhà trẻ
-(cùng stack, cùng bộ khung `apiClient`, `AuthContext`, component dùng chung).
+Cách viết code frontend để mọi màn hình theo cùng một khuôn (bộ khung `apiClient`, `AuthContext`,
+component dùng chung).
 
 Đọc cùng:
 

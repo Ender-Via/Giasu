@@ -303,8 +303,7 @@ xuống dòng (`whitespace-pre-wrap`), không render HTML.
 4. 429 → hiện message, khóa form, nút đếm ngược 60 giây (D08).
 5. Không có "Quên mật khẩu", "Ghi nhớ đăng nhập", tài khoản demo (D17).
 
-**Hiện trạng:** trang đã có (chép từ Nhatre). Việc phải sửa: thêm [5], đổi màu xám/đen mặc định
-sang token (`design-system.md` §3.1). Làm cùng thẻ SCR-AUTH-02.
+**Hiện trạng:** Đã hoàn thiện theo design system token và component dùng chung (thẻ S01-08).
 
 **Quy tắc liên quan** — D06, D08.
 

@@ -3,8 +3,8 @@
 ## 0. Về tài liệu này
 
 Giao diện dùng chung của frontend: màu, chữ, khoảng cách, component dùng chung, quy tắc
-responsive và truy cập. Bộ component và token màu chép từ dự án Nhà trẻ (cùng stack), nên
-tài liệu này mô tả đúng `src/app/globals.css`, `src/app/layout.tsx`, `src/components/` hiện có.
+responsive và truy cập. Bộ component và token màu được chuẩn hóa cho dự án Gia Sư theo nhận diện prototype EJS,
+mô tả đúng `src/app/globals.css`, `src/app/layout.tsx`, `src/components/` hiện có.
 Chỗ còn ghi "mẫu" là khuôn nên theo khi làm màn hình đầu tiên của loại đó.
 
 Ba tài liệu frontend chia việc như sau:
