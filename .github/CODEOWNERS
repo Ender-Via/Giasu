@@ -1,0 +1,19 @@
+# Người duyệt bắt buộc cho từng phần của repo. Quy tắc khớp SAU CÙNG được áp dụng.
+# THAY các username giả bên dưới bằng username GitHub thật trước khi bật branch protection.
+#   SV1 Lộc       — Lead (nhóm trưởng) + Backend  → @sv1-lead
+#   SV2 Trí Kiệt  — GitHub owner + Frontend       → @sv2-github-owner
+#   SV3 Lân       — Backend + Database            → @sv3-be-db
+#   SV4 Anh Kiệt  — Frontend + Testing            → @sv4-fe-test
+
+# Mặc định (README, .gitignore, file ở gốc): GitHub owner
+*                         @sv2-github-owner
+
+/backend/                 @sv1-lead @sv3-be-db
+/backend/**/Migrations/   @sv3-be-db @sv1-lead
+/backend/GiaSu.Tests/     @sv4-fe-test @sv1-lead @sv3-be-db
+/frontend/                @sv2-github-owner @sv4-fe-test
+
+# Tài liệu, quy trình, CI: chỉ GitHub owner (D02)
+/docs/                    @sv2-github-owner
+/.github/                 @sv2-github-owner
+/CLAUDE.md                @sv2-github-owner
