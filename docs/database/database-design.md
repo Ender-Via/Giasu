@@ -1,11 +1,11 @@
-# Mô hình dữ liệu khởi điểm
+# Thiết kế database
 
 Bản phác để SV3 dựng ERD ở Sprint 01 (migration từng bảng do người làm module tạo, D11); ERD chốt xong thì cập nhật lại file này và
 sheet **P3D_04_CoSoDuLieu**. Tên bảng snake_case số nhiều, khóa chính `id uuid` (riêng `roles`,
 `subjects` dùng `smallint`), thời gian `timestamptz` tên kết thúc `_at` (lưu UTC).
 Khóa ngoại mặc định `ON DELETE RESTRICT`; không xóa cứng dữ liệu nghiệp vụ.
 
-Trạng thái và quy tắc: `business-rules.md`. Tên lớp: `DECISIONS.md` D18.
+Trạng thái và quy tắc: `business/business-rules.md`. Tên lớp: `DECISIONS.md` D18. Khu vực: D37.
 
 ## Đã có (migration `InitialAuth`)
 
@@ -18,15 +18,15 @@ Trạng thái và quy tắc: `business-rules.md`. Tên lớp: `DECISIONS.md` D18
 
 | Bảng | Cột chính | Quan hệ | Module |
 | :-- | :-- | :-- | :-- |
-| `tutors` | `user_id` (PK = FK users), `phone`, `university`, `student_code`, `verification_status`, `reputation_score` | 1–1 `users` | AUTH |
+| `tutors` | `user_id` (PK = FK users), `phone`, `verification_status`, `reputation_score` | 1–1 `users` | AUTH |
 | `parents` | `user_id` (PK = FK users), `phone`, `reputation_score` | 1–1 `users` | AUTH |
 | `students` | `id`, `parent_id`, `full_name`, `grade_level` | N–1 `parents` | REQUEST |
 | `subjects` | `id`, `name`, `education_level` | danh mục, seed | PROFILE |
-| `student_verifications` | `id`, `tutor_id`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at` | N–1 `tutors` | VERIFY |
-| `tutor_profiles` | `id`, `tutor_id`, `title`, `description`, `experience`, `education_level`, `province`, `district`, `expected_fee_per_session`, `status`, `availability`, `is_default`, `reject_reason`, `created_at`, `updated_at` | N–1 `tutors` | PROFILE |
+| `student_verifications` | `id`, `tutor_id`, `university`, `student_code`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at` | N–1 `tutors` | VERIFY |
+| `tutor_profiles` | `id`, `tutor_id`, `title`, `description`, `experience`, `education_level`, `teaching_mode`, `province`, `teaching_wards` (text[], 1–5), `expected_fee_per_session`, `status`, `availability`, `is_default`, `reject_reason`, `created_at`, `updated_at` | N–1 `tutors` | PROFILE |
 | `tutor_profile_subjects` | `profile_id`, `subject_id` (PK ghép) | N–N | PROFILE |
 | `tutor_profile_evidences` | `id`, `profile_id`, `file_ref`, `file_name`, `content_type`, `size_bytes` | N–1 `tutor_profiles` | PROFILE |
-| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `province`, `district`, `address`, `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `created_at` | N–1 `parents`, `students`, `subjects` | REQUEST |
+| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address`, `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `created_at` | N–1 `parents`, `students`, `subjects` | REQUEST |
 | `saved_tutor_requests` | `tutor_id`, `request_id` (PK ghép), `saved_at` | N–N | SEARCH |
 | `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles` | APPLY |
 | `conversations` | `id`, `application_id` (unique), `created_at` | 1–1 `tutor_applications` | CHAT |
@@ -44,9 +44,9 @@ Trạng thái và quy tắc: `business-rules.md`. Tên lớp: `DECISIONS.md` D18
 | `violation_reports` | `id`, `reporter_id`, `reported_user_id`, `category`, `description`, `status`, `resolution`, `handled_by`, `created_at`, `resolved_at` | N–1 `users` | VIOLATION |
 | `violation_evidences` | `id`, `report_id`, `file_ref`, `file_name` | N–1 `violation_reports` | VIOLATION |
 | `account_sanctions` | `id`, `user_id`, `report_id`, `type` (`Warning`, `FeatureLock`, `PermanentBan`), `locked_until`, `reason`, `created_by`, `created_at` | N–1 `users` | VIOLATION |
-| `notifications` | `id`, `recipient_id`, `type`, `title`, `message`, `link`, `is_read`, `created_at` | N–1 `users` | NOTI |
+| `notifications` | `id`, `recipient_id`, `type`, `title`, `message`, `link`, `is_read`, `created_at`; index (`recipient_id`, `is_read`, `created_at`) | N–1 `users` | NOTI |
 | `notification_preferences` | `user_id`, `type` (PK ghép), `email_enabled` | N–1 `users` | NOTI |
 | `audit_logs` | `id`, `actor_id`, `entity`, `entity_id`, `action`, `from_status`, `to_status`, `created_at` | — | dùng chung (BR-22) |
 
 Ràng buộc nên đặt ở database (CHECK), không chỉ ở validator: các cột `status`, `stars` 1–5,
-`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`.
+`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`, `province` thuộc danh mục D37.

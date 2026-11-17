@@ -78,3 +78,6 @@ Logs/
 ~$*
 *.docx
 .postman/
+
+# Bộ docs tham khảo của Nhatre (có .git riêng) — không đưa vào repo
+docs_thamkhao/

@@ -9,7 +9,18 @@ Sheets): nhận thẻ → code → PR → review → merge → đánh dấu Xong
 | **GitHub owner** — repo, nhánh, merge `main`, `CODEOWNERS`, `docs/`, biểu mẫu OOAD | SV2 Trí Kiệt |
 | Thiết kế database — ERD, duyệt migration | SV3 Lân |
 
-## 0. Năm luật không thương lượng
+## 0. Đặc tả của thẻ nằm ở đâu
+
+Trước khi code một thẻ, đọc theo thứ tự (cột "Mã yêu cầu" của thẻ cho biết mã):
+
+1. FR của thẻ trong `requirements/functional-requirements.md` — gồm "API dự kiến".
+2. AC trong `requirements/acceptance-criteria.md` — thứ phải kiểm được trước khi mở PR.
+3. Thẻ frontend: mục SCR trong `frontend/ui-screens.md`.
+4. BR, D được nhắc tới.
+
+FR hoặc SCR của thẻ còn ghi "chưa viết" → **chưa code**, báo GitHub owner.
+
+## 0.1 Năm luật không thương lượng
 
 1. **Backend trước, frontend sau.** Thẻ FE của một chức năng nằm ở sprint *sau* thẻ BE của nó.
    BE chưa merge thì FE làm giao diện với dữ liệu giả, nối API sau — không chờ ngồi không.
@@ -98,7 +109,7 @@ commit secret (connection string, `Jwt:Key`, service key), `dotnet ef database d
 - [ ] Validator FluentValidation, message tiếng Việt
 - [ ] Logic nghiệp vụ ở Service, chỉ Repository gọi `AppDbContext`
 - [ ] `[Authorize(Roles = ...)]` bằng hằng số; ngoài phạm vi trả 404 (D07)
-- [ ] Đăng ký DI đủ; status code đúng `conventions.md` §2
+- [ ] Đăng ký DI đủ; status code đúng `api/api-conventions.md` §4; đi hết checklist §9 của file đó
 - [ ] Unit test cho mỗi quy tắc `BR-xx` của thẻ (`backend/GiaSu.Tests`)
 - [ ] Postman: ca đúng + ca 400 + ca sai vai trò
 - [ ] Migration (nếu có) đã được người backend còn lại duyệt (D11)
@@ -109,10 +120,10 @@ commit secret (connection string, `Jwt:Key`, service key), `dotnet ef database d
 - [ ] React Hook Form cho form, TanStack Query cho đọc/ghi
 - [ ] Đủ 3 trạng thái: đang tải / lỗi / rỗng
 - [ ] Dùng được ở 375 px và 1280 px
-- [ ] Tự bấm thử theo từng ý trong User Story/BR của thẻ, ghi kết quả vào PR
+- [ ] Đúng mục SCR trong `frontend/ui-screens.md`; tự kiểm theo `testing/testing-strategy.md` §3.3, ghi kết quả theo mã AC vào PR
 - [ ] `npm run lint` và `npm run build` sạch
 
-**Thẻ tài liệu (Docs)**: nội dung khớp `DECISIONS.md` và `business-rules.md`, dùng đúng mã
+**Thẻ tài liệu (Docs)**: nội dung khớp `DECISIONS.md`, `business/business-rules.md` và `business/user-roles.md`, dùng đúng mã
 FR/UC/BR/D, GitHub owner đã đọc.
 
 ## 6. Pull Request

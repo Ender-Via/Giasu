@@ -62,7 +62,8 @@ chỉ để khôi phục phiên.
 Phạm vi lấy từ `sub` trong token, không bao giờ từ id client gửi lên.
 
 ### D08 — Chống dò mật khẩu
-`POST /api/auth/login` giới hạn **5 lần/phút/IP** (trả 429). Thay cho quy tắc "khóa tài khoản
+`POST /api/auth/login` và `POST /api/auth/register` mỗi endpoint giới hạn **5 lần/phút/IP**
+(trả 429). Thay cho quy tắc "khóa tài khoản
 15 phút sau 5 lần sai" trong SSD-01/SSD-27 (khóa tài khoản để người khác cố tình khóa hộ được).
 
 ### D09 — Header bảo mật
@@ -114,7 +115,8 @@ Mỗi tệp ≤ 5 MB, chỉ JPG/PNG/PDF.
 
 ### D17 — Ngoài phạm vi MVP
 Xuất PDF báo cáo tiến độ (bỏ SSD-43), tin nổi bật trả phí, ký quỹ học phí, ngân hàng đề,
-quét nội dung chat tự động bằng từ khóa (SSD-36 chỉ còn: người dùng báo cáo tin nhắn).
+quét nội dung chat tự động bằng từ khóa (SSD-36 chỉ còn: người dùng báo cáo tin nhắn), quên mật
+khẩu / đặt lại mật khẩu qua email, "ghi nhớ đăng nhập", đăng nhập bằng Google, tài khoản demo.
 
 ---
 
@@ -140,7 +142,7 @@ Giá trị trạng thái lưu chuỗi tiếng Anh PascalCase (`PendingReview`), 
 ### D19 — Lớp miền bổ sung
 Thêm vào Domain Model (sheet P3A_03): `Student`, `TutorProfileEvidence`, `StudentVerification`,
 `SavedTutorRequest`, `RescheduleRequest`, `Notification`, `NotificationPreference`,
-`AccountSanction`, `ReputationFlag`. Chi tiết ở `data-model.md`.
+`AccountSanction`, `ReputationFlag`. Chi tiết ở `database/database-design.md`.
 
 ---
 
@@ -169,9 +171,15 @@ Phụ huynh tạo hồ sơ `Student` (họ tên, lớp đang học) trước khi
 gắn một học sinh. Một quan hệ gia sư–học sinh có đúng một lộ trình (FR-15).
 
 ### D25 — Matching Score (FR-08)
-Thang 0–100: **môn khớp 50** + **khu vực khớp 30** (cùng quận/huyện 30, cùng tỉnh 15)
-+ **học phí 20** (mức gia sư mong muốn nằm trong khoảng của tin 20, lệch ≤ 20% thì 10).
-Tính khi gọi API tìm kiếm, không lưu sẵn; bỏ tác vụ nền SSD-58.
+Thang 0–100, tính giữa **hồ sơ mặc định** của gia sư và một tin:
+- **Môn 50:** môn của tin nằm trong các môn của hồ sơ.
+- **Khu vực 30:** tin và hồ sơ cùng cho phép `Online` → 30; ngược lại cùng tỉnh và phường của tin
+  có trong `teaching_wards` của hồ sơ (so sau khi bỏ dấu, chữ thường, bỏ tiền tố "phường"/"xã")
+  → 30; chỉ cùng tỉnh → 15.
+- **Học phí 20:** học phí mong muốn của hồ sơ nằm trong `[min_fee, max_fee]` của tin → 20; lệch
+  không quá 20% so với mốc gần nhất → 10.
+
+Tính khi gọi API tìm kiếm, không lưu sẵn; bỏ tác vụ nền SSD-58. Khu vực theo D37.
 
 ### D26 — Chat mở khi nào
 Chỉ mở hội thoại khi phiếu ứng tuyển ở `Viewed`, `TrialInvited` hoặc `Hired`, hoặc khi đã có lộ
@@ -201,7 +209,7 @@ Tạo cờ cho Admin khi gia sư có ≥ 5 đánh giá và > 30% là 1 sao, ho�
 Cờ không tự khóa tài khoản; Admin quyết định.
 
 ### D32 — Trạng thái dùng chung
-Danh sách trạng thái chính thức ở `business-rules.md` §2. Không tự thêm trạng thái mới
+Danh sách trạng thái chính thức ở `business/business-rules.md` §2. Không tự thêm trạng thái mới
 (ví dụ "Bản nháp" trong SSD-02, "Không hợp lệ" trong SSD-56) khi chưa có trong danh sách đó.
 
 ### D33 — Tin hết hạn
@@ -216,3 +224,26 @@ sửa (`Draft`, kèm góp ý). Bỏ trạng thái "Thảo luận" của SSD-08.
 Hệ thống tự tổng hợp theo **tuần** (Chủ nhật hằng tuần) cho mỗi lộ trình `Active`; gia sư có thể
 tạo thêm theo khoảng ngày tùy chọn. Cảnh báo lệch tiến độ khi kế hoạch tuần đã qua ≥ 2 tuần mà
 nội dung chưa đánh dấu hoàn thành (FR-23).
+
+### D36 — Xác thực sinh viên không bắt buộc
+Gia sư gửi duyệt hồ sơ và ứng tuyển được khi chưa xác thực sinh viên. Gia sư đã xác thực có huy
+hiệu "Đã xác thực" trên hồ sơ và trong danh sách ứng viên; phụ huynh dùng huy hiệu này để chọn.
+- Lý do: bắt buộc xác thực trước làm Admin thành nút thắt cho mọi gia sư mới, trong khi hồ sơ đã
+  được duyệt riêng (FR-04).
+- Đánh đổi: phụ huynh có thể gặp ứng viên chưa xác thực; giao diện phải hiện rõ trạng thái.
+
+### D37 — Khu vực theo đơn vị hành chính hai cấp
+Từ 1/7/2025 Việt Nam bỏ cấp quận/huyện, còn **34 tỉnh/thành** và cấp phường/xã. Biểu mẫu và SSD
+còn ghi "quận" (SSD-03, prototype UI-02) — theo quyết định này:
+- `province`: chọn từ danh mục cố định 34 giá trị dưới đây, lưu đúng chuỗi. Backend có hằng số
+  `Provinces` trong `GiaSu.Domain.Constants`, frontend có `src/lib/provinces.ts`, hai danh sách phải
+  trùng.
+- `ward` (tin) / `teaching_wards` (hồ sơ, 1–5 giá trị): chữ tự do ≤ 100 ký tự. Không làm danh mục
+  phường/xã (hơn 3.000 giá trị) trong MVP.
+- Hình thức dạy `Offline` / `Online` / `Both`; chỉ `Online` thì không bắt buộc phường/xã.
+
+Danh mục, theo thứ tự hiển thị: Hà Nội · TP. Hồ Chí Minh · Hải Phòng · Đà Nẵng · Cần Thơ · Huế ·
+An Giang · Bắc Ninh · Cà Mau · Cao Bằng · Đắk Lắk · Điện Biên · Đồng Nai · Đồng Tháp · Gia Lai ·
+Hà Tĩnh · Hưng Yên · Khánh Hòa · Lai Châu · Lâm Đồng · Lạng Sơn · Lào Cai · Nghệ An · Ninh Bình ·
+Phú Thọ · Quảng Ngãi · Quảng Ninh · Quảng Trị · Sơn La · Tây Ninh · Thái Nguyên · Thanh Hóa ·
+Tuyên Quang · Vĩnh Long.
