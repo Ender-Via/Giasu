@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { ApiError, toApiError } from "@/lib/axios";
+import { toApiError } from "@/lib/axios";
+import { Button, Input, ApiErrorAlert, LoadingSpinner, Icons } from "@/components";
 
 interface LoginFormValues {
   email: string;
@@ -15,10 +17,9 @@ export default function LoginPage() {
   const { user, isLoading, login } = useAuth();
   const router = useRouter();
 
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [apiErrors, setApiErrors] = useState<string[] | null>(null);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<unknown>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const {
     register,
@@ -52,87 +53,69 @@ export default function LoginPage() {
 
   async function onSubmit(data: LoginFormValues) {
     if (cooldownSeconds > 0) return;
-    setApiError(null);
-    setApiErrors(null);
-    setRateLimitError(null);
+    setSubmitError(null);
 
     try {
       await login(data.email, data.password);
       router.replace("/");
     } catch (err: unknown) {
-      const error = err instanceof ApiError ? err : toApiError(err);
-
+      const error = toApiError(err);
       if (error.status === 429) {
-        setRateLimitError(error.message);
         setCooldownSeconds(60);
-        setApiError(null);
-        setApiErrors(null);
-      } else {
-        setRateLimitError(null);
-        if (error.errors && error.errors.length > 0) {
-          setApiErrors(error.errors);
-          setApiError(null);
-        } else {
-          setApiError(error.message);
-          setApiErrors(null);
-        }
       }
+      setSubmitError(err);
     }
   }
 
   if (isLoading || user) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-4">
-        <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+      <main className="flex min-h-screen items-center justify-center p-4 bg-background">
+        <LoadingSpinner label="Đang kiểm tra phiên đăng nhập..." />
       </main>
     );
   }
 
   const isButtonDisabled = isSubmitting || cooldownSeconds > 0;
-  const activeErrorMessage = cooldownSeconds > 0 ? rateLimitError : apiError;
+  const activeError =
+    cooldownSeconds > 0
+      ? `Bạn đã thử đăng nhập quá số lần cho phép. Vui lòng thử lại sau ${cooldownSeconds} giây.`
+      : submitError;
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-      >
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-gray-900">Đăng nhập</h1>
-          <p className="text-xs text-gray-500">
-            Nền tảng tìm gia sư và quản lý quá trình dạy
+    <main className="flex min-h-screen items-center justify-center p-4 sm:p-6 bg-background">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200/90 bg-surface-container-lowest p-6 sm:p-8 shadow-sm">
+        {/* Tiêu đề & Giới thiệu */}
+        <div className="space-y-1 mb-6 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 mb-2 text-primary">
+            <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
+              <Icons.School />
+            </div>
+            <span className="font-bold text-lg leading-none">Gia Sư Kết Nối</span>
+          </div>
+          <h1 className="text-2xl font-bold text-on-surface">Đăng nhập</h1>
+          <p className="text-sm text-on-surface-variant">
+            Nền tảng tìm gia sư và quản lý quá trình dạy học
           </p>
         </div>
 
-        {/* Thông báo lỗi từ server: có errors thì hiện danh sách từng dòng, không có thì hiện một thông báo duy nhất từ message */}
-        {apiErrors && apiErrors.length > 0 ? (
-          <ul className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600 list-disc list-inside space-y-1">
-            {apiErrors.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
-          </ul>
-        ) : activeErrorMessage ? (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-            {activeErrorMessage}
+        {/* Thông báo lỗi từ server (SCR-AUTH-01 [1]) */}
+        {activeError ? (
+          <div className="mb-4">
+            <ApiErrorAlert error={activeError} />
           </div>
         ) : null}
 
-        {/* Ô nhập Email */}
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+          {/* Ô nhập Email (SCR-AUTH-01 [2]) */}
+          <Input
             id="email"
             type="email"
+            label="Email"
+            required
             autoComplete="email"
             disabled={isButtonDisabled}
-            aria-invalid={errors.email ? "true" : "false"}
-            aria-describedby={errors.email ? "email-error" : undefined}
+            placeholder="hoten@example.com"
+            error={errors.email?.message}
             {...register("email", {
               setValueAs: (v: string) => (typeof v === "string" ? v.trim() : v),
               required: "Vui lòng nhập email",
@@ -145,65 +128,72 @@ export default function LoginPage() {
                 message: "Email không đúng định dạng",
               },
             })}
-            className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 transition focus:outline-none focus:ring-2 ${
-              errors.email
-                ? "border-red-500 focus:ring-red-300"
-                : "border-gray-300 focus:border-black focus:ring-black/10"
-            }`}
-            placeholder="nhanvien@truong.edu.vn"
           />
-          {errors.email && (
-            <p id="email-error" className="mt-1 text-xs text-red-600">
-              {errors.email.message}
-            </p>
-          )}
-        </div>
 
-        {/* Ô nhập Mật khẩu */}
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Mật khẩu
-          </label>
-          <input
+          {/* Ô nhập Mật khẩu (SCR-AUTH-01 [3]) */}
+          <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
+            label="Mật khẩu"
+            required
             autoComplete="current-password"
             disabled={isButtonDisabled}
-            aria-invalid={errors.password ? "true" : "false"}
-            aria-describedby={errors.password ? "password-error" : undefined}
+            placeholder="••••••••"
+            error={errors.password?.message}
+            suffixIcon={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                className="text-outline hover:text-on-surface transition-colors p-1 cursor-pointer"
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            }
             {...register("password", {
               required: "Vui lòng nhập mật khẩu",
             })}
-            className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 transition focus:outline-none focus:ring-2 ${
-              errors.password
-                ? "border-red-500 focus:ring-red-300"
-                : "border-gray-300 focus:border-black focus:ring-black/10"
-            }`}
-            placeholder="••••••••"
           />
-          {errors.password && (
-            <p id="password-error" className="mt-1 text-xs text-red-600">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
 
-        {/* Nút Đăng nhập */}
-        <button
-          type="submit"
-          disabled={isButtonDisabled}
-          className="w-full rounded-md bg-black py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting
-            ? "Đang đăng nhập..."
-            : cooldownSeconds > 0
-            ? `Thử lại sau (${cooldownSeconds}s)`
-            : "Đăng nhập"}
-        </button>
-      </form>
+          {/* Nút Đăng nhập (SCR-AUTH-01 [4]) */}
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full min-h-11 rounded-full font-bold shadow-sm"
+              isLoading={isSubmitting}
+              disabled={isButtonDisabled}
+            >
+              {cooldownSeconds > 0
+                ? `Thử lại sau (${cooldownSeconds}s)`
+                : "Đăng nhập"}
+            </Button>
+          </div>
+        </form>
+
+        {/* Liên kết Đăng ký (SCR-AUTH-01 [5]) */}
+        <div className="mt-6 pt-4 border-t border-slate-100 text-center text-sm text-on-surface-variant">
+          <span>Chưa có tài khoản? </span>
+          <Link
+            href="/register"
+            className="font-semibold text-primary hover:underline transition-colors"
+          >
+            Đăng ký ngay
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }

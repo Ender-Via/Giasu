@@ -77,18 +77,21 @@ Khai báo trong `@theme` của `app/globals.css`, dùng như màu Tailwind: `bg-
 
 | Token | Giá trị | Dùng cho |
 | :---- | :---- | :---- |
-| `primary` | `#006c4c` | Nút chính, liên kết, viền khi focus, tông tích cực |
+| `primary` | `#00288e` | Nút chính, liên kết, viền khi focus |
 | `on-primary` | `#ffffff` | Chữ trên nền `primary` hoặc `primary-container` |
-| `primary-container` | `#4eba8e` | Mục menu đang mở, ô chữ cái đầu của người dùng (`DashboardLayout`) |
-| `primary-fixed` | `#8cf7c7` | Nền nhạt của tông tích cực, thường kèm độ trong `/30`–`/70` |
-| `on-primary-fixed` | `#002114` | Chữ trên nền `primary-fixed` |
-| `secondary` | `#00658c` | Tông thông tin, nhãn phụ |
-| `surface` | `#f8f9ff` | Nền trang |
-| `surface-container-low` | `#eff4ff` | Nền khối phụ, đầu bảng, hover |
+| `primary-container` | `#1e40af` | Mục menu đang mở, ô chữ cái đầu của người dùng (`DashboardLayout`) |
+| `primary-fixed` | `#dde1ff` | Nền nhạt của tông chính / tích cực, thường kèm độ trong `/30`–`/70` |
+| `on-primary-fixed` | `#001453` | Chữ trên nền `primary-fixed` |
+| `secondary` | `#4b41e1` | Tông thông tin, nhãn phụ (Indigo) |
+| `secondary-fixed` | `#e2dfff` | Nền nhạt tông secondary |
+| `on-secondary-fixed` | `#0f0069` | Chữ trên nền `secondary-fixed` |
+| `surface` | `#faf8ff` | Nền trang |
+| `surface-container-low` | `#f2f3ff` | Nền khối phụ, đầu bảng, hover |
+| `surface-container` | `#eaedff` | Nền khối |
 | `surface-container-lowest` | `#ffffff` | Nền thẻ, ô nhập, hộp thoại |
-| `on-surface` | `#0d1c2e` | Chữ chính |
-| `on-surface-variant` | `#3e4943` | Chữ phụ |
-| `outline` | `#6e7a72` | Màu nhạt nhất còn được dùng cho chữ cần đọc; placeholder dùng `outline/70` |
+| `on-surface` | `#131b2e` | Chữ chính |
+| `on-surface-variant` | `#444653` | Chữ phụ |
+| `outline` | `#757684` | Màu nhạt nhất còn được dùng cho chữ cần đọc; placeholder dùng `outline/70` |
 | `error` | `#ba1a1a` | Lỗi, tông nguy hiểm, viền ô nhập sai |
 | `error-container` | `#ffdad6` | Nền của lỗi và tông nguy hiểm |
 | `on-error-container` | `#93000a` | Chữ trên nền `error-container` |
@@ -220,7 +223,5 @@ trong `src/components/`.
 
 ## 8. Chỗ code hiện chưa theo tài liệu này
 
-- Trang đăng nhập (SCR-AUTH-01) còn dùng màu xám và đen mặc định của Tailwind, chưa dùng token
-  §3.1 — sửa cùng thẻ SCR-AUTH-02.
-- Chưa có `Badge` dùng chung (§5.1).
 - `DashboardLayout` chưa có chuông thông báo (`ui-screens.md` §4.1 [7]) — làm cùng thẻ SCR-COM-01.
+- *Ghi chú hoàn thành:* Thẻ S01-08 đã cập nhật nhận diện Gia sư (TutorConnect) theo prototype EJS, chuẩn hóa màu sắc trang Đăng nhập (SCR-AUTH-01) theo token và bổ sung component `Badge.tsx` dùng chung.
