@@ -77,10 +77,11 @@ Khuôn mỗi FR:
   3. Admin duyệt → `Verified`, hoặc từ chối kèm lý do → `Rejected`. Gia sư nhận thông báo.
 - **Quy tắc:** BR-03, BR-05; §2.2 của business-rules; D16, D36.
 - **Phân quyền & phạm vi:**
-  - Gia sư chỉ xem yêu cầu của mình. Đang có yêu cầu `Pending` hoặc đã `Verified` mà gửi tiếp →
-    409.
+  - Gia sư chỉ xem yêu cầu của mình: `mine` lấy theo `sub`, không nhận id; API theo id chỉ dành
+    cho Admin. Đang có yêu cầu `Pending` hoặc đã `Verified` mà gửi tiếp → 409.
   - Tên trường 2–150 ký tự; mã số sinh viên 3–20 ký tự, chỉ chữ và số. Tệp ≤ 5 MB, JPG/PNG/PDF.
-  - Admin duyệt hoặc từ chối yêu cầu không ở `Pending` → 409. Từ chối thiếu lý do → 400.
+  - Admin duyệt hoặc từ chối yêu cầu không ở `Pending` → 409. Từ chối thiếu lý do hoặc lý do quá
+    500 ký tự → 400 (BR-05).
   - Người duyệt và thời điểm duyệt do server đặt.
 - **API dự kiến:**
   - Gia sư: `GET /api/student-verifications/mine` (yêu cầu gần nhất, hoặc `data: null`) ·
@@ -89,7 +90,7 @@ Khuôn mỗi FR:
     `GET /api/student-verifications/{id}` (kèm `evidenceUrl` ký 60 phút) ·
     `POST /api/student-verifications/{id}/approve` · `POST /api/student-verifications/{id}/reject`
     `{ reason }`.
-- **Nghiệm thu:** AC-VERIFY-01 … AC-VERIFY-06 · **Màn hình:** SCR-TUT-03, SCR-ADM-03.
+- **Nghiệm thu:** AC-VERIFY-01 … AC-VERIFY-07 · **Màn hình:** SCR-TUT-03, SCR-ADM-03.
 
 ---
 
@@ -102,7 +103,8 @@ Khuôn mỗi FR:
 - **Quy tắc:** BR-02, BR-04, BR-23, BR-24, BR-25.
 - **Phân quyền & phạm vi:** Chỉ hồ sơ của mình; hồ sơ người khác → 404. Hồ sơ thứ 6 → 409. Sửa hồ
   sơ `PendingReview` → 409. Hồ sơ đầu tiên tự là mặc định; đặt mặc định hồ sơ khác thì bỏ mặc
-  định hồ sơ cũ trong cùng transaction.
+  định hồ sơ cũ trong cùng transaction. Các API ở đây chỉ dành cho Gia sư; Admin xem hồ sơ qua
+  API của module ADMIN-REVIEW (viết ở S02), Phụ huynh qua API của APPLY (FR-11).
 - **API dự kiến:** `GET /api/tutor-profiles/mine` · `GET /api/tutor-profiles/{id}` ·
   `POST /api/tutor-profiles` → 201 · `PUT /api/tutor-profiles/{id}` ·
   `POST /api/tutor-profiles/{id}/set-default` · `GET /api/subjects` (danh mục môn, mọi vai trò).
