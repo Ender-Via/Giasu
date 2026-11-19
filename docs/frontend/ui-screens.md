@@ -522,7 +522,8 @@ Gỡ, Tải lên, kèm dải "Hồ sơ đang chờ duyệt, chưa sửa được
 
 - **Mục đích:** Gia sư gửi minh chứng sinh viên và theo dõi kết quả.
 - **Route:** `/tutor/verification` · **Vai trò:** Gia sư
-- **Yêu cầu:** FR-02 · UC-18 · AC-VERIFY-01, AC-VERIFY-02, AC-VERIFY-03, AC-VERIFY-05
+- **Yêu cầu:** FR-02 · UC-18 · AC-VERIFY-01, AC-VERIFY-02, AC-VERIFY-03, AC-VERIFY-05,
+  AC-VERIFY-07
 - **API:** `GET /api/student-verifications/mine`, `POST /api/student-verifications` (chờ S02-03)
 
 **Bố cục**
