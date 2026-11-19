@@ -7,6 +7,7 @@ import RoleGuard from "@/components/RoleGuard";
 // Thêm màn hình mới: thêm một mục vào menu này và một thư mục route cùng tên.
 const TUTOR_MENU_ITEMS: NavItem[] = [
   { label: "Hồ sơ gia sư", href: "/tutor/profiles", icon: "User" },
+  { label: "Xác thực sinh viên", href: "/tutor/verification", icon: "Check" },
   { label: "Tìm tin tuyển", href: "/tutor/jobs", icon: "Search" },
   { label: "Ứng tuyển của tôi", href: "/tutor/applications", icon: "Clipboard" },
   { label: "Lộ trình và buổi học", href: "/tutor/roadmaps", icon: "Clock" },

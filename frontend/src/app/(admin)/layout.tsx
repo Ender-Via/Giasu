@@ -8,6 +8,7 @@ import RoleGuard from "@/components/RoleGuard";
 const ADMIN_MENU_ITEMS: NavItem[] = [
   { label: "Tổng quan", href: "/admin/dashboard", icon: "Activity" },
   { label: "Duyệt hồ sơ gia sư", href: "/admin/tutor-profiles", icon: "FileText" },
+  { label: "Xác thực sinh viên", href: "/admin/student-verifications", icon: "Check" },
   { label: "Duyệt tin tìm gia sư", href: "/admin/jobs", icon: "Clipboard" },
   { label: "Báo cáo vi phạm", href: "/admin/violations", icon: "Alert" },
   { label: "Thông báo", href: "/admin/notifications", icon: "Info" },
