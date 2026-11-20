@@ -12,6 +12,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   helperText?: string;
   prefixIcon?: React.ReactNode;
   suffixIcon?: React.ReactNode;
+  // Phần tử bấm được ở cuối ô (ví dụ nút hiện/ẩn mật khẩu). Khác suffixIcon chỉ để trang trí,
+  // vùng này nhận chuột và bàn phím.
+  suffixAction?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -24,6 +27,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       helperText,
       prefixIcon,
       suffixIcon,
+      suffixAction,
       disabled,
       className = "",
       ...props
@@ -32,6 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const generatedId = useId();
     const inputId = id || generatedId;
+    const hasSuffix = Boolean(suffixIcon || suffixAction);
 
     return (
       <div className="w-full space-y-1.5 text-left">
@@ -67,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             }
             className={`w-full rounded-2xl border bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface transition-all placeholder:text-outline/70 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
               prefixIcon ? "pl-11" : ""
-            } ${suffixIcon ? "pr-11" : ""} ${
+            } ${hasSuffix ? "pr-11" : ""} ${
               error
                 ? "border-error focus:border-error focus:ring-error/20"
                 : "border-slate-300 focus:border-primary focus:ring-primary/20"
@@ -79,6 +84,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <div className="absolute right-3.5 text-on-surface-variant pointer-events-none flex items-center">
               {suffixIcon}
             </div>
+          )}
+
+          {suffixAction && !suffixIcon && (
+            <div className="absolute right-2 flex items-center">{suffixAction}</div>
           )}
         </div>
 

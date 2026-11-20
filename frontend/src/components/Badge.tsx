@@ -33,7 +33,7 @@ const TONE_CONFIG: Record<
     defaultDot: true,
   },
   neutral: {
-    containerClass: "bg-slate-100 text-outline border border-slate-200",
+    containerClass: "bg-slate-100 text-on-surface-variant border border-slate-200",
     dotClass: "bg-outline",
     defaultDot: true,
   },

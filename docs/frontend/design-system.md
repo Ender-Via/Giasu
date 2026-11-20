@@ -73,7 +73,7 @@ chỉ dùng `font-normal`, `font-medium`, `font-semibold`, `font-bold`; `font-li
 ### 3.1 Token
 
 Khai báo trong `@theme` của `app/globals.css`, dùng như màu Tailwind: `bg-primary`,
-`text-on-surface`, `border-outline`, `bg-primary-fixed/40`...
+`text-on-surface`, `border-outline`, `bg-primary-fixed/50`...
 
 | Token | Giá trị | Dùng cho |
 | :---- | :---- | :---- |
@@ -85,9 +85,13 @@ Khai báo trong `@theme` của `app/globals.css`, dùng như màu Tailwind: `bg-
 | `secondary` | `#4b41e1` | Tông thông tin, nhãn phụ (Indigo) |
 | `secondary-fixed` | `#e2dfff` | Nền nhạt tông secondary |
 | `on-secondary-fixed` | `#0f0069` | Chữ trên nền `secondary-fixed` |
+| `tertiary` | `#003d27` | Xanh lá đậm theo prototype EJS; chưa màn hình nào dùng, dự phòng cho nhấn tích cực |
+| `tertiary-fixed` | `#6ffbbe` | Nền nhạt tông tertiary |
+| `on-tertiary-fixed` | `#002113` | Chữ trên nền `tertiary-fixed` |
 | `surface` | `#faf8ff` | Nền trang |
 | `surface-container-low` | `#f2f3ff` | Nền khối phụ, đầu bảng, hover |
 | `surface-container` | `#eaedff` | Nền khối |
+| `surface-container-high` | `#e2e7ff` | Nền khối cần nổi hơn `surface-container` |
 | `surface-container-lowest` | `#ffffff` | Nền thẻ, ô nhập, hộp thoại |
 | `on-surface` | `#131b2e` | Chữ chính |
 | `on-surface-variant` | `#444653` | Chữ phụ |
@@ -104,15 +108,15 @@ nhập `border-slate-300`, nền ô bị khóa `bg-slate-100`.
 
 ### 3.2 Tông trạng thái
 
-Mọi nhãn trạng thái, dù ở màn hình nào, chọn một trong năm tông dưới đây theo ý nghĩa của giá trị,
+Mọi nhãn trạng thái dùng component `Badge` (§5) với prop `tone`; dù ở màn hình nào, chọn một trong năm tông dưới đây theo ý nghĩa của giá trị,
 không theo sở thích của từng màn hình.
 
 | Tông | Ý nghĩa | Nền và chữ | Chấm |
 | :---- | :---- | :---- | :---- |
-| Tích cực | Việc đã xong, đang ổn | `bg-primary-fixed/40 text-primary` | `bg-primary` |
+| Tích cực | Việc đã xong, đang ổn | `bg-primary-fixed/50 text-primary` | `bg-primary` |
 | Cảnh báo | Cần để ý nhưng không phải lỗi | `bg-amber-100 text-amber-800` | `bg-amber-600` |
 | Nguy hiểm | Sai, vi phạm, sự việc xấu | `bg-error-container text-on-error-container` | `bg-error` |
-| Trung tính | Chưa có, chưa làm, đã tắt | `bg-slate-100 text-outline` | `bg-outline` |
+| Trung tính | Chưa có, chưa làm, đã tắt | `bg-slate-100 text-on-surface-variant` | `bg-outline` |
 | Thông tin | Phân loại, không mang đánh giá | `bg-surface-container-low text-secondary` | không có |
 
 Gán tông cho các giá trị liệt kê ở `ui-screens.md` §4.4 và `business/business-rules.md` §2:
@@ -157,14 +161,15 @@ Tất cả xuất qua `src/components/index.ts`: `import { Button, Input, Table 
 | Component | Dùng khi | Props chính | Lưu ý |
 | :---- | :---- | :---- | :---- |
 | `Button` | Mọi nút | `variant`: `primary` (hành động chính, mỗi khu vực một nút), `secondary`, `outline` (hành động phụ), `danger` (xóa, vô hiệu hóa), `ghost` (hành động nhẹ như "Xóa bộ lọc"); `size`: `sm`, `md` (mặc định), `lg`; `isLoading` (hiện vòng quay và tự khóa); `icon` | Mặc định `type="button"`; nút gửi form phải ghi `type="submit"`. `sm` cao khoảng 30px, `md` khoảng 36px: nút thao tác chính trên điện thoại thêm `min-h-11` |
-| `Input`, `Textarea`, `Select`, `Checkbox` (`Form.tsx`) | Mọi ô nhập | `label` (tự gắn `htmlFor`), `error` (hiện dưới ô, đặt `aria-invalid`), `helperText`, `required` (dấu `*`). `Input`: `prefixIcon`, `suffixIcon`. `Textarea`: `showCount`, `currentValue` để đếm ký tự. `Select`: `options`, `placeholder` (một lựa chọn rỗng bị khóa, dùng cho ô bắt đầu rỗng — `ui-screens.md` §4.3) | Có `forwardRef`, dùng thẳng với `register` của React Hook Form |
+| `Input`, `Textarea`, `Select`, `Checkbox` (`Form.tsx`) | Mọi ô nhập | `label` (tự gắn `htmlFor`), `error` (hiện dưới ô, đặt `aria-invalid`), `helperText`, `required` (dấu `*`). `Input`: `prefixIcon`, `suffixIcon` (chỉ trang trí, không nhận chuột), `suffixAction` (nút bấm được ở cuối ô, ví dụ hiện/ẩn mật khẩu). `Textarea`: `showCount`, `currentValue` để đếm ký tự. `Select`: `options`, `placeholder` (một lựa chọn rỗng bị khóa, dùng cho ô bắt đầu rỗng — `ui-screens.md` §4.3) | Có `forwardRef`, dùng thẳng với `register` của React Hook Form |
+| `Badge` | Mọi nhãn trạng thái | `tone`: `positive`, `warning`, `danger`, `neutral` (mặc định), `info` theo §3.2; `size`: `sm`, `md` (mặc định); `showDot`; `icon` | Chấm có `aria-hidden="true"`; tông `info` mặc định không có chấm. Có `icon` thì không hiện chấm |
 | `Modal` | Hộp thoại có form hay nội dung | `isOpen`, `onClose`, `title`, `description`, `size` (`sm`, `md`, `lg`, `xl`), `closeOnBackdropClick`, `closeOnEscape`, `showCloseButton` | Khóa cuộn trang khi mở. Chưa giữ và trả focus (§7) |
 | `ConfirmDialog` | Xác nhận thao tác không hoàn tác được (`ui-screens.md` §4.3) | `variant`: `primary`, `warning`, `danger`; `title`, `message` (ReactNode), `confirmText`, `cancelText`, `isLoading`, `onConfirm` | Đang gửi thì khóa cả nút Hủy và không đóng được. Lỗi API hiện ngay trong `message`; chỉ đóng khi thành công  |
 | `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell` | Danh sách nhiều cột trên màn rộng | `Table` có `containerClassName` | Khung đã có `overflow-x-auto`, nhưng dưới `xl` phải đổi sang thẻ (§6) |
 | `TableLoading`, `TableEmpty`, `TableError` | Ba trạng thái bên trong bảng | `colSpan` bắt buộc; `TableLoading`: `rowCount` (mặc định 5); `TableEmpty`: `title`, `message`, `actionText`, `onAction`; `TableError`: `message`, `onRetry` | |
 | `LoadingSpinner`, `EmptyState`, `ErrorAlert` (`StateFeedback.tsx`) | Ba trạng thái ngoài bảng, và lỗi tải lại phía trên dữ liệu cũ | `LoadingSpinner`: `label`; `EmptyState`: `title`, `message`, `icon`, `actionText`, `onAction`; `ErrorAlert`: `title`, `message`, `onRetry` | |
 | `Pagination` | Phân trang | `currentPage`, `totalPages`, `onPageChange`, `totalItems`, `pageSize`, `siblingCount` | Có dòng "Hiển thị a - b trong n kết quả" khi truyền `totalItems` và `pageSize` |
-| `Icons` | Mọi biểu tượng | `Alert`, `Check`, `Close`, `Refresh`, `Spinner`, `Empty`, `Info`, `Trash`, `ChevronLeft`, `ChevronRight`, `Menu`, `Logout`, `User`, `School`, `Clock`, `Heart`, `Camera`, `Activity`, `FileText`, `Clipboard`, `Tool` | SVG viết thẳng, nét theo `currentColor` nên đổi màu bằng `text-*`. Cỡ 20px (`Menu` 24, `Logout` và `Refresh` 18, `Empty` 40). Thiếu biểu tượng (ví dụ chưa có kính lúp cho ô tìm) thì thêm vào `Icons.tsx`, không vẽ SVG riêng trong màn hình, không nạp từ CDN (D03) |
+| `Icons` | Mọi biểu tượng | `Alert`, `Check`, `Close`, `Refresh`, `Spinner`, `Empty`, `Info`, `Trash`, `ChevronLeft`, `ChevronRight`, `Menu`, `Logout`, `User`, `School`, `Clock`, `Heart`, `Camera`, `Activity`, `FileText`, `Clipboard`, `Tool`, `Search`, `Eye`, `EyeOff` | SVG viết thẳng, nét theo `currentColor` nên đổi màu bằng `text-*`. Cỡ 20px (`Menu` 24, `Logout`, `Refresh`, `Search`, `Eye`, `EyeOff` 18, `Empty` 40). Thiếu biểu tượng (ví dụ chưa có kính lúp cho ô tìm) thì thêm vào `Icons.tsx`, không vẽ SVG riêng trong màn hình, không nạp từ CDN (D03) |
 | `DashboardLayout`, `RoleGuard` | Chỉ trong `layout.tsx` của mỗi vai trò | | Khung trang ở `ui-screens.md` §4.1 |
 | `UnderConstruction` | Trang chưa làm | | |
 
@@ -173,13 +178,10 @@ Tất cả xuất qua `src/components/index.ts`: `import { Button, Input, Table 
 Các khuôn dưới đây đang viết thẳng trong màn hình. Khi vai trò thứ hai cần thì gom thành component
 trong `src/components/`.
 
-- **Nhãn trạng thái:** `inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1
-  text-xs font-semibold` cộng nền và chữ theo tông §3.2, chấm `h-1.5 w-1.5 rounded-full` có
-  `aria-hidden="true"`. Nên gom ngay thành `src/components/Badge.tsx` với prop `tone` (thẻ S01 "[FE] Đổi design system"),
-  vì cả ba vai trò đều có nhãn trạng thái.
 - **Dải thông báo thành công và lỗi:** `role="status"` hoặc `role="alert"`, nút đóng là nút chỉ có
   `Icons.Close` với `aria-label="Đóng thông báo"`. 
-- **Lỗi API trong form:** liệt kê `errors` nếu có, không thì hiện `message`. Đã có `src/components/ApiErrorAlert.tsx`.
+
+Nhãn trạng thái đã gom thành `Badge` (§5); lỗi API trong form đã gom thành `ApiErrorAlert`.
 
 ---
 
@@ -224,4 +226,5 @@ trong `src/components/`.
 ## 8. Chỗ code hiện chưa theo tài liệu này
 
 - `DashboardLayout` chưa có chuông thông báo (`ui-screens.md` §4.1 [7]) — làm cùng thẻ SCR-COM-01.
-- *Ghi chú hoàn thành:* Thẻ S01-08 đã cập nhật nhận diện Gia sư (TutorConnect) theo prototype EJS, chuẩn hóa màu sắc trang Đăng nhập (SCR-AUTH-01) theo token và bổ sung component `Badge.tsx` dùng chung.
+- Token màu đã đổi theo prototype EJS qua layout chung, nhưng chưa kiểm trực quan cả ba cổng và chưa
+  đối chiếu trực tiếp với prototype.
