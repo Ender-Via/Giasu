@@ -303,8 +303,9 @@ xuống dòng (`whitespace-pre-wrap`), không render HTML.
 4. 429 → hiện message, khóa form, nút đếm ngược 60 giây (D08).
 5. Không có "Quên mật khẩu", "Ghi nhớ đăng nhập", tài khoản demo (D17).
 
-**Hiện trạng:** trang đã có. Việc phải sửa: thêm [5], đổi màu xám/đen mặc định
-sang token (`design-system.md` §3.1). Làm cùng thẻ SCR-AUTH-02.
+**Hiện trạng:** [1]–[4] đã theo token và component dùng chung (thẻ S01-08). [5] đang chờ: link
+tạm ẩn vì chưa có route `/register`, bật lại cùng SCR-AUTH-02 (S02-07). Chưa kiểm với backend thật
+hai ca: đăng nhập thành công của cả ba vai trò, và 429 ở lần gọi thứ sáu trong một phút.
 
 **Quy tắc liên quan** — D06, D08.
 

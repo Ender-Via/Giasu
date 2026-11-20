@@ -6,6 +6,7 @@ import RoleGuard from "@/components/RoleGuard";
 
 // Thêm màn hình mới: thêm một mục vào menu này và một thư mục route cùng tên.
 const PARENT_MENU_ITEMS: NavItem[] = [
+  { label: "Học sinh của tôi", href: "/parent/students", icon: "School" },
   { label: "Tin tìm gia sư", href: "/parent/jobs", icon: "Clipboard" },
   { label: "Lộ trình và buổi học", href: "/parent/roadmaps", icon: "Clock" },
   { label: "Học phí", href: "/parent/payments", icon: "FileText" },
