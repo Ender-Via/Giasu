@@ -5,7 +5,7 @@ Trong mọi tài liệu: **Lead** là SV1 Trần Quý Lộc (nhóm trưởng), *
 Trí Kiệt (giữ repo và tài liệu). Chỉ GitHub owner thêm hoặc sửa quyết định. Thấy code và quyết
 định mâu thuẫn thì báo GitHub owner, không tự chọn.
 
-Bảng này cũng là nguồn cho sheet **P3D_03_QuyetDinhTK** của biểu mẫu OOAD. Các quyết định D20–D35
+Bảng này cũng là nguồn cho sheet **P3D_03_QuyetDinhTK** của biểu mẫu OOAD. Các quyết định D20–D35 và D38
 sửa mâu thuẫn trong biểu mẫu; mỗi quyết định đó được ghi thành một CR ở sheet **P2_07_ThayDoiYC**.
 
 ---
@@ -247,3 +247,14 @@ An Giang · Bắc Ninh · Cà Mau · Cao Bằng · Đắk Lắk · Điện Biên
 Hà Tĩnh · Hưng Yên · Khánh Hòa · Lai Châu · Lâm Đồng · Lạng Sơn · Lào Cai · Nghệ An · Ninh Bình ·
 Phú Thọ · Quảng Ngãi · Quảng Ninh · Quảng Trị · Sơn La · Tây Ninh · Thái Nguyên · Thanh Hóa ·
 Tuyên Quang · Vĩnh Long.
+
+### D38 — Phạm vi UC-01 và UC-18 so với biểu mẫu
+Sheet **P3A_01_CaSuDung** ghi UC-01 chỉ có đăng nhập, UC-18 chỉ có tác nhân Admin. Theo quyết
+định này:
+- UC-01 gồm cả **đăng ký** và **đăng xuất** (FR-01, BR-01, D06). Truy vết AC-AUTH-01 … AC-AUTH-03
+  về UC-01.
+- UC-18 có hai tác nhân: **Gia sư** gửi yêu cầu (bước 0: nhập trường, mã số sinh viên, tải minh
+  chứng) và **Admin** duyệt (FR-02). Truy vết AC-VERIFY-01 … AC-VERIFY-03 về UC-18.
+- Lý do: biểu mẫu không có UC riêng cho đăng ký hay gửi xác thực, nhưng FR-01, FR-02 có; tách UC
+  mới sẽ làm lệch số UC đã dùng ở P3A_02_SSD và P4_02_TruyVet.
+- Cuối kỳ: ghi một CR ở **P2_07_ThayDoiYC** và sửa cột tác nhân, luồng của hai UC trong P3A_01.

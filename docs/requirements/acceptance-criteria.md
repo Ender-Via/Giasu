@@ -113,6 +113,12 @@ module đó.
 - **Thì:** Lần lượt 403 (A gọi API của Admin), 403, 409.
 - **Truy vết:** FR-02 | BR-SCOPE-02, BR-SCOPE-05 | UC-18 | NFR-02
 
+### AC-VERIFY-07 — Gia sư chỉ thấy yêu cầu của mình
+- **Cho trước:** Gia sư A có yêu cầu `Rejected`; gia sư B có yêu cầu `Pending`; gia sư C chưa gửi yêu cầu nào.
+- **Khi:** Lần lượt A, B, C gọi `GET /api/student-verifications/mine`.
+- **Thì:** A nhận đúng yêu cầu của A kèm lý do từ chối; B nhận đúng yêu cầu của B; C nhận 200 với `data: null`. Không ai nhận được yêu cầu của người khác.
+- **Truy vết:** FR-02 | BR-SCOPE-01, BR-SCOPE-02 | UC-18 | NFR-02
+
 ---
 
 ## 3. PROFILE — Hồ sơ gia sư
