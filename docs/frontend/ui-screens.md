@@ -81,7 +81,7 @@ Có phiên? ── không ──▶ /login (SCR-AUTH-01) ⇄ /register (SCR-AUTH
 - Mở `/login` hay `/register` khi đã có phiên → về `/`.
 - Layout mỗi vai trò bọc `RoleGuard`: đang khôi phục phiên → vòng quay; không có phiên →
   `/login`; sai vai trò → `/`. Không có trang "Không có quyền".
-- **Đăng xuất:** nút ở đầu trang gọi `logout()` → `POST /api/auth/logout` rồi xóa phiên ở máy.
+- **Đăng xuất:** nút ở đầu trang gọi `logout()` → Supabase `signOut({ scope: "local" })` rồi xóa phiên ở máy.
   Có hiệu lực trên mọi thiết bị (D06).
 - **Hết hạn phiên:** timer theo `expiresAtUtc` chỉ xóa phiên ở máy, không gọi API.
 - **Bị thu hồi phiên:** API nào trả 401 thì interceptor xóa phiên và tải lại `/login`.
@@ -268,7 +268,7 @@ xuống dòng (`whitespace-pre-wrap`), không render HTML.
 - **Mục đích:** Mọi người dùng đăng nhập để vào cổng của vai trò mình.
 - **Route:** `/login` · **Vai trò:** chưa đăng nhập
 - **Yêu cầu:** FR-01 · UC-01 · AC-AUTH-04, AC-AUTH-05
-- **API:** `POST /api/auth/login` (qua `login()` của `AuthContext`, đã có)
+- **API:** Supabase Auth `signInWithPassword`, sau đó `GET /api/auth/me` qua `AuthContext` (đã có)
 
 **Bố cục**
 
@@ -291,7 +291,7 @@ xuống dòng (`whitespace-pre-wrap`), không render HTML.
 | 1 | Lỗi từ server | `errors` hoặc `message` | — |
 | 2 | Email | Bỏ khoảng trắng hai đầu; bắt buộc; ≤ 254 ký tự; đúng định dạng | — |
 | 3 | Mật khẩu | Bắt buộc; không bỏ khoảng trắng; nút hiện/ẩn mật khẩu | — |
-| 4 | Nút Đăng nhập | "Đang đăng nhập..." khi gửi; "Thử lại sau (Ns)" khi bị giới hạn | `POST /api/auth/login` |
+| 4 | Nút Đăng nhập | "Đang đăng nhập..." khi gửi; "Thử lại sau (Ns)" khi Supabase giới hạn | Supabase Auth → `GET /api/auth/me` |
 | 5 | Liên kết | Sang `/register` | — |
 
 **Hành vi**

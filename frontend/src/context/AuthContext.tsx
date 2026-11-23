@@ -4,20 +4,13 @@ import {
   createContext,
   useCallback,
   useContext,
-  useState,
   useEffect,
-  useRef,
+  useState,
   ReactNode,
 } from "react";
-import {
-  apiClient,
-  getStoredToken,
-  getStoredExpiresAt,
-  setAuthToken,
-  toApiError,
-  ApiError,
-} from "@/lib/axios";
-import type { ApiResponse, LoginResponseData, Role } from "@/types/auth";
+import { apiClient, setAuthToken, toApiError, ApiError } from "@/lib/axios";
+import { supabase } from "@/lib/supabase";
+import type { ApiResponse, Role } from "@/types/auth";
 
 interface AuthUser {
   userId: string;
@@ -39,107 +32,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Tách clearSession (hủy timer, xóa state, xóa token local) - Không gọi API
   const clearSession = useCallback(() => {
-    if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
     setToken(null);
     setUser(null);
     setAuthToken(null);
   }, []);
 
+  const loadBusinessProfile = useCallback(async (accessToken: string) => {
+    setAuthToken(accessToken);
+    const res = await apiClient.get<ApiResponse<AuthUser>>("/api/auth/me");
+    if (!res.data.success || !res.data.data) {
+      throw new ApiError(
+        res.data.message ?? "Không tìm thấy hồ sơ tài khoản.",
+        res.data.errors,
+        null
+      );
+    }
+
+    setToken(accessToken);
+    setUser(res.data.data);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
-      await apiClient.post("/api/auth/logout");
-    } catch {
-
+      await supabase.auth.signOut({ scope: "local" });
     } finally {
       clearSession();
     }
   }, [clearSession]);
 
- 
-  const scheduleAutoLogout = useCallback(
-    (expiresAtUtc: string) => {
-      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-      const msUntilExpiry = new Date(expiresAtUtc).getTime() - Date.now();
-      if (msUntilExpiry <= 0) {
+  useEffect(() => {
+    async function restoreSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (!data.session) {
         clearSession();
         return;
       }
-      logoutTimerRef.current = setTimeout(() => {
-        clearSession(); 
-      }, msUntilExpiry);
-    },
-    [clearSession]
-  );
 
-  useEffect(() => {
-    async function restoreSession() {
-      const storedToken = getStoredToken();
-      if (!storedToken) return;
-
-      setAuthToken(storedToken);
       try {
-        const res = await apiClient.get<
-          ApiResponse<{ userId: string; fullName: string; role: Role }>
-        >("/api/auth/me");
-        if (!res.data.success || !res.data.data) {
-          setAuthToken(null);
-          return;
-        }
-
-        setToken(storedToken);
-        setUser({
-          userId: res.data.data.userId,
-          fullName: res.data.data.fullName,
-          role: res.data.data.role,
-        });
-
-        const storedExpiry = getStoredExpiresAt();
-        if (storedExpiry) {
-          scheduleAutoLogout(storedExpiry);
-        } else {
-          clearSession();
-        }
+        await loadBusinessProfile(data.session.access_token);
       } catch {
-        setAuthToken(null);
+        await supabase.auth.signOut({ scope: "local" });
+        clearSession();
       }
     }
 
-    restoreSession().finally(() => setIsLoading(false));
+    restoreSession()
+      .catch(async () => {
+        await supabase.auth.signOut({ scope: "local" });
+        clearSession();
+      })
+      .finally(() => setIsLoading(false));
 
-    return () => {
-      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-    };
-  }, [clearSession, scheduleAutoLogout]);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        clearSession();
+        return;
+      }
+      if (event === "TOKEN_REFRESHED") {
+        void loadBusinessProfile(session.access_token).catch(clearSession);
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, [clearSession, loadBusinessProfile]);
 
   async function login(email: string, password: string) {
     try {
-      const res = await apiClient.post<ApiResponse<LoginResponseData>>(
-        "/api/auth/login",
-        { email, password }
-      );
-
-      const loginData = res.data.data;
-      if (!loginData) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
         throw new ApiError(
-          res.data.message ?? "Đăng nhập thất bại.",
-          res.data.errors,
-          null
+          "Email hoặc mật khẩu không đúng.",
+          null,
+          error.status ?? 401
         );
       }
+      if (!data.session) {
+        throw new ApiError("Đăng nhập thất bại.", null, 401);
+      }
 
-      const { token: newToken, userId, fullName, role, expiresAtUtc } = loginData;
-
-      setAuthToken(newToken, expiresAtUtc); 
-      setToken(newToken);
-      setUser({ userId, fullName, role });
-      scheduleAutoLogout(expiresAtUtc);
+      await loadBusinessProfile(data.session.access_token);
     } catch (err) {
-      if (err instanceof ApiError) throw err; 
+      if (err instanceof ApiError) throw err;
       throw toApiError(err);
     }
   }

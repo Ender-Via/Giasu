@@ -46,21 +46,22 @@ Khuôn mỗi FR:
   và chỉ dùng được chức năng của vai trò mình.
 - **Luồng chính — đăng ký:** khách chọn vai trò Gia sư hoặc Phụ huynh → nhập họ tên, số điện
   thoại, email, mật khẩu, đồng ý quy chế → hệ thống tạo tài khoản đang hoạt động cùng hồ sơ vai
-  trò (`tutors` hoặc `parents`) trong một transaction → giao diện tự đăng nhập.
-- **Luồng chính — đăng nhập:** gửi email + mật khẩu → hệ thống trả JWT kèm vai trò → giao diện
-  chuyển tới cổng của vai trò.
-- **Luồng chính — đăng xuất:** hệ thống tăng `token_version`, mọi token cũ của người đó hết hiệu
-  lực trên mọi thiết bị (D06).
+  trò (`tutors` hoặc `parents`) và ánh xạ `users.auth_user_id` → giao diện tự đăng nhập. Phần này
+  thuộc thẻ S01-04, chưa triển khai trong nền FastAPI.
+- **Luồng chính — đăng nhập:** Next.js gửi email + mật khẩu tới Supabase Auth, nhận access token,
+  gọi `GET /api/auth/me`; backend xác minh token và trả vai trò nghiệp vụ → giao diện chuyển cổng.
+- **Luồng chính — đăng xuất:** frontend kết thúc phiên Supabase local và xóa access token khỏi
+  bộ nhớ; access token đã phát hết hiệu lực theo `exp` (D06).
 - **Quy tắc:** BR-01; D05, D06, D08.
 - **Phân quyền & phạm vi:**
-  - Đăng ký và đăng nhập là hai chức năng **duy nhất** không cần đăng nhập. Cả hai giới hạn
-    5 lần/phút/IP (D08).
+  - Đăng ký và đăng nhập là hai luồng **duy nhất** không cần Bearer token; Supabase Auth giới hạn
+    5 lần/phút/IP theo cấu hình project (D08).
   - Vai trò ngoài `Tutor`, `Parent` khi đăng ký → 400. Email đã có → **409** "Email đã được sử
     dụng.".
   - Sai email, sai mật khẩu, tài khoản bị khóa: **cùng** 401 "Email hoặc mật khẩu không đúng.".
   - Không có "quên mật khẩu" trong MVP (D17).
-- **API dự kiến:** `POST /api/auth/register` → 201 `{ userId }` · `POST /api/auth/login` (đã có) ·
-  `GET /api/auth/me` (đã có) · `POST /api/auth/logout` (đã có).
+- **API dự kiến:** Supabase Auth `signInWithPassword`/`signOut` · `GET /api/auth/me` (đã có) ·
+  đăng ký và tạo hồ sơ nghiệp vụ ở S01-04 (chưa triển khai).
 - **Nghiệm thu:** AC-AUTH-01 … AC-AUTH-08 · **Màn hình:** SCR-AUTH-01, SCR-AUTH-02.
 
 ---

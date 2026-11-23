@@ -75,7 +75,7 @@ Mỗi người có sẵn nhánh dài hạn, dùng suốt module, **mỗi nhánh 
 | SV2 Trí Kiệt | `feature/fe-tutor` | mọi màn hình của Gia sư |
 | SV4 Anh Kiệt | `feature/fe-parent` | mọi màn hình của Phụ huynh |
 | SV4 Anh Kiệt | `feature/fe-admin` | mọi màn hình của Admin |
-| SV4 Anh Kiệt | `feature/tests` | xUnit, Postman |
+| SV4 Anh Kiệt | `feature/tests` | pytest, Postman |
 
 Hai nhánh/người để khi một PR đang chờ review vẫn làm được thẻ khác ở nhánh còn lại (commit
 thêm vào nhánh đang có PR mở sẽ lẫn vào PR đó).
@@ -88,8 +88,9 @@ git checkout develop
 git pull
 git checkout feature/be-recruitment
 git pull
-git merge develop                # xung đột ở Program.cs: giữ CẢ HAI phía
-dotnet build backend/GiaSu.slnx  # hoặc: cd frontend && npm run build
+git merge develop
+cd backend && uv sync --locked --all-groups && uv run pytest
+# hoặc: cd frontend && npm ci && npm run build
 ```
 
 ## 4. Commit
@@ -100,31 +101,42 @@ Commit nhỏ, mỗi commit một việc trọn vẹn. `git add` từng file/thư
 Push ít nhất một lần cuối mỗi buổi làm.
 
 **Cấm trên repo chung:** `git push --force`, `git reset --hard` trên nhánh đã push, `git add -f`,
-commit secret (connection string, `Jwt:Key`, service key), `dotnet ef database drop`.
+commit secret (connection string, service-role key, access/refresh token), `alembic downgrade`,
+drop schema/database hoặc stamp/upgrade DB dùng chung trước khi PR merge.
 
 ## 5. Definition of Done
 
 **Thẻ backend**
-- [ ] DTO là `record`, không trả Entity ra ngoài
-- [ ] Validator FluentValidation, message tiếng Việt
-- [ ] Logic nghiệp vụ ở Service, chỉ Repository gọi `AppDbContext`
-- [ ] `[Authorize(Roles = ...)]` bằng hằng số; ngoài phạm vi trả 404 (D07)
-- [ ] Đăng ký DI đủ; status code đúng `api/api-conventions.md` §4; đi hết checklist §9 của file đó
-- [ ] Unit test cho mỗi quy tắc `BR-xx` của thẻ (`backend/GiaSu.Tests`)
+- [ ] DTO là schema Pydantic, không trả model SQLAlchemy ra ngoài
+- [ ] Validation Pydantic, message tiếng Việt
+- [ ] Logic nghiệp vụ ở Service, chỉ Repository gọi SQLAlchemy `Session`
+- [ ] Dependency xác thực/phân quyền đủ; ngoài phạm vi trả 404 (D07)
+- [ ] Router được include; status code đúng `api/api-conventions.md` §4; đi hết checklist §9
+- [ ] pytest cho mỗi quy tắc `BR-xx` của thẻ (`backend/tests`)
 - [ ] Postman: ca đúng + ca 400 + ca sai vai trò
 - [ ] Migration (nếu có) đã được người backend còn lại duyệt (D11)
-- [ ] `dotnet build -warnaserror` và `dotnet test` sạch
+- [ ] `uv run ruff check .` và `uv run pytest` sạch; migration chạy trên PostgreSQL local/test
 
 **Thẻ frontend**
 - [ ] Gọi API qua `apiClient`, lỗi qua `toApiError()`
 - [ ] React Hook Form cho form, TanStack Query cho đọc/ghi
 - [ ] Đủ 3 trạng thái: đang tải / lỗi / rỗng
-- [ ] Dùng được ở 375 px và 1280 px
+- [ ] Dùng được ở 375 px và 1280 px; nút thao tác chính cao tối thiểu 44 px
 - [ ] Đúng mục SCR trong `frontend/ui-screens.md`; tự kiểm theo `testing/testing-strategy.md` §3.3, ghi kết quả theo mã AC vào PR
 - [ ] `npm run lint` và `npm run build` sạch
 
+**Thẻ test**
+- [ ] Mỗi test gắn với FR/AC/BR; tên test nêu rõ điều kiện và kết quả
+- [ ] Có ca biên: đúng giới hạn và vượt giới hạn 1
+- [ ] `uv run pytest` sạch; Postman Collection chạy được bằng `newman` khi thẻ có API
+
 **Thẻ tài liệu (Docs)**: nội dung khớp `DECISIONS.md`, `business/business-rules.md` và `business/user-roles.md`, dùng đúng mã
 FR/UC/BR/D, GitHub owner đã đọc.
+
+Checklist trên là bản FastAPI thay thế các mục `.NET` trong sheet **DoD** của
+`KeHoach_GiaSu.xlsx`: Pydantic thay DTO/FluentValidation, dependency thay `[Authorize]`,
+SQLAlchemy `Session` thay `AppDbContext`, Ruff + pytest thay `dotnet build/test`. Các yêu cầu nghiệp
+vụ, Postman, review migration, responsive và truy vết FR/AC/BR vẫn giữ nguyên.
 
 ## 6. Pull Request
 

@@ -3,7 +3,7 @@
 ## 0. Về tài liệu này
 
 Mỗi tiêu chí là một kịch bản **Cho trước / Khi / Thì** kiểm được bằng một thao tác cụ thể (Postman,
-xUnit hoặc bấm tay). Dùng cho ba việc:
+pytest hoặc bấm tay). Dùng cho ba việc:
 
 - Backend viết unit test và request Postman theo AC của thẻ.
 - Frontend tự kiểm màn hình theo AC ghi ở dòng "Yêu cầu" của mục SCR.
@@ -45,14 +45,15 @@ module đó.
 
 ### AC-AUTH-04 — Đăng nhập sai không lộ lý do
 - **Cho trước:** (a) email không tồn tại; (b) email đúng, sai mật khẩu; (c) tài khoản đã bị khóa.
-- **Khi:** Đăng nhập với từng trường hợp.
-- **Thì:** Cả ba trả 401 với **cùng** câu "Email hoặc mật khẩu không đúng."; không cấp token.
+- **Khi:** (a), (b) đăng nhập qua Supabase; (c) đăng nhập đúng rồi gọi `/api/auth/me`.
+- **Thì:** Giao diện hiển thị cùng câu "Email hoặc mật khẩu không đúng."; tài khoản khóa không
+  nhận được hồ sơ nghiệp vụ và không vào cổng vai trò.
 - **Truy vết:** FR-01 | D06 | UC-01 | NFR-02
 
 ### AC-AUTH-05 — Giới hạn tần suất
-- **Cho trước:** Một IP đã gọi `POST /api/auth/login` 5 lần trong 1 phút.
-- **Khi:** Gọi lần thứ 6 trong cùng phút, kể cả đúng mật khẩu. Lặp lại với `POST /api/auth/register`.
-- **Thì:** 429, body theo `ApiResponse<T>`; không cấp token, không tạo tài khoản.
+- **Cho trước:** Project Supabase đã cấu hình Auth 5 lần/phút/IP và một IP đã thử 5 lần.
+- **Khi:** Gọi Supabase Auth lần thứ 6 trong cùng phút; lặp lại với luồng đăng ký S01-04.
+- **Thì:** Supabase trả 429; frontend hiển thị thời gian chờ; không tạo hồ sơ nghiệp vụ.
 - **Truy vết:** FR-01 | D08 | UC-01 | NFR-02
 
 ### AC-AUTH-06 — Sai vai trò bị chặn
@@ -62,15 +63,16 @@ module đó.
 - **Truy vết:** FR-01 | BR-SCOPE-05 | UC-01 | NFR-02
 
 ### AC-AUTH-07 — Không có token hợp lệ
-- **Cho trước:** Một API bất kỳ ngoài đăng ký và đăng nhập.
-- **Khi:** Gọi (a) không có token; (b) token hết hạn; (c) token sửa claim `role` thành `Admin`.
+- **Cho trước:** `GET /api/auth/me` hoặc API nghiệp vụ.
+- **Khi:** Gọi (a) không có token; (b) token hết hạn; (c) token bị sửa hoặc ký bằng khóa khác.
 - **Thì:** Cả ba 401; không thực hiện thao tác.
 - **Truy vết:** FR-01 | D06 | UC-01 | NFR-02
 
-### AC-AUTH-08 — Đăng xuất làm token cũ hết hiệu lực
-- **Cho trước:** Gia sư đã đăng nhập, đã chép token ra Postman.
-- **Khi:** Gọi `POST /api/auth/logout`, rồi dùng token cũ gọi `GET /api/auth/me`.
-- **Thì:** Request sau trả 401. Đăng nhập lại cấp token mới dùng được bình thường.
+### AC-AUTH-08 — Đăng xuất xóa phiên local
+- **Cho trước:** Gia sư đã đăng nhập trên frontend.
+- **Khi:** Bấm Đăng xuất rồi mở lại trang cần xác thực.
+- **Thì:** Supabase session và token trong bộ nhớ bị xóa, frontend về `/login`, Axios không gửi
+  Bearer token. Access token đã chép ra ngoài chỉ hết hiệu lực theo `exp` (D06).
 - **Truy vết:** FR-01 | D06 | UC-01 | NFR-02
 
 ---

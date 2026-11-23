@@ -9,8 +9,8 @@
 *                         @Ender-Via
 
 /backend/                 @loctq-vn @LanTran0901
-/backend/**/Migrations/   @LanTran0901 @loctq-vn
-/backend/GiaSu.Tests/     @anhkietbienhoa-crypto @loctq-vn @LanTran0901
+/backend/migrations/      @LanTran0901 @loctq-vn
+/backend/tests/           @anhkietbienhoa-crypto @loctq-vn @LanTran0901
 /frontend/                @Ender-Via @anhkietbienhoa-crypto
 
 # Tài liệu, quy trình, CI: chỉ GitHub owner (D02)

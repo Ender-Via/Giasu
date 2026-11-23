@@ -15,7 +15,7 @@
 - [ ] Ca đúng:
 - [ ] Ca dữ liệu sai (400):
 - [ ] Ca sai vai trò (403) / ngoài phạm vi (404):
-- [ ] Backend: `dotnet build -warnaserror` + `dotnet test` sạch / Frontend: `npm run build` + `npm run lint` sạch
+- [ ] Backend: `uv run ruff check .` + `uv run pytest` + migration test sạch / Frontend: `npm run build` + `npm run lint` sạch
 
 ## Thẻ kế hoạch
 <!-- Mã thẻ trong file kế hoạch, ví dụ S03-BE-02 -->
