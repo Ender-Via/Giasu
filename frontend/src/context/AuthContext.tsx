@@ -10,6 +10,7 @@ import {
 } from "react";
 import { apiClient, setAuthToken, toApiError, ApiError } from "@/lib/axios";
 import { supabase } from "@/lib/supabase";
+import type { AuthError } from "@supabase/supabase-js";
 import type { ApiResponse, Role } from "@/types/auth";
 
 interface AuthUser {
@@ -28,6 +29,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function toSignInError(error: AuthError): ApiError {
+  if (error.status === 429 || error.code === "over_request_rate_limit") {
+    return new ApiError(
+      "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau 60 giây.",
+      null,
+      429
+    );
+  }
+
+  if (error.code === "email_not_confirmed") {
+    return new ApiError(
+      "Email chưa được xác nhận. Vui lòng kiểm tra hộp thư.",
+      null,
+      error.status ?? 400
+    );
+  }
+
+  return new ApiError("Email hoặc mật khẩu không đúng.", null, 401);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -39,20 +60,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(null);
   }, []);
 
-  const loadBusinessProfile = useCallback(async (accessToken: string) => {
-    setAuthToken(accessToken);
-    const res = await apiClient.get<ApiResponse<AuthUser>>("/api/auth/me");
-    if (!res.data.success || !res.data.data) {
-      throw new ApiError(
-        res.data.message ?? "Không tìm thấy hồ sơ tài khoản.",
-        res.data.errors,
-        null
-      );
-    }
+  const loadBusinessProfile = useCallback(
+    async (accessToken: string, skipAuthRedirect = false) => {
+      setAuthToken(accessToken);
+      const res = await apiClient.get<ApiResponse<AuthUser>>("/api/auth/me", {
+        skipAuthRedirect,
+      });
+      if (!res.data.success || !res.data.data) {
+        throw new ApiError(
+          res.data.message ?? "Không tìm thấy hồ sơ tài khoản.",
+          res.data.errors,
+          null
+        );
+      }
 
-    setToken(accessToken);
-    setUser(res.data.data);
-  }, []);
+      setToken(accessToken);
+      setUser(res.data.data);
+    },
+    []
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -100,21 +126,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession, loadBusinessProfile]);
 
   async function login(email: string, password: string) {
+    let signedIn = false;
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        throw new ApiError(
-          "Email hoặc mật khẩu không đúng.",
-          null,
-          error.status ?? 401
-        );
+        throw toSignInError(error);
       }
       if (!data.session) {
         throw new ApiError("Đăng nhập thất bại.", null, 401);
       }
 
-      await loadBusinessProfile(data.session.access_token);
+      signedIn = true;
+      await loadBusinessProfile(data.session.access_token, true);
     } catch (err) {
+      if (signedIn) {
+        await logout();
+      }
       if (err instanceof ApiError) throw err;
       throw toApiError(err);
     }

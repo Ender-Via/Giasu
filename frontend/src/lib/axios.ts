@@ -2,6 +2,12 @@ import axios, { AxiosError } from "axios";
 import type { ApiResponse } from "@/types/auth";
 import { supabase } from "@/lib/supabase";
 
+declare module "axios" {
+  interface AxiosRequestConfig {
+    skipAuthRedirect?: boolean;
+  }
+}
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5015";
 
@@ -25,11 +31,12 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Token đăng nhập do Supabase cấp, nên mọi 401 từ API đều kết thúc phiên local.
+// Token đăng nhập do Supabase cấp, nên 401 từ API kết thúc phiên local. Luồng login
+// đặt skipAuthRedirect để AuthContext tự dọn phiên và giữ message của /api/auth/me.
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
       setAuthToken(null);
       void supabase.auth.signOut({ scope: "local" });
       if (typeof window !== "undefined") {

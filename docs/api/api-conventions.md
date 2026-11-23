@@ -109,13 +109,15 @@ Không xóa cứng dữ liệu nghiệp vụ. Hai ngoại lệ MVP: minh chứng
 
 ## 6. Xác thực và phân quyền
 
-`get_current_auth_user` xác minh Supabase JWT bằng JWKS, yêu cầu `sub`, `exp`, `iss`, `aud`.
-`sub` chỉ là `auth.users.id`; service/repository phải ánh xạ qua `users.auth_user_id` để lấy:
+`get_current_auth_user` chỉ xác minh Supabase JWT bằng JWKS, yêu cầu `sub`, `exp`, `iss`, `aud`.
+Mọi route cần đăng nhập phải dùng dependency chung `get_current_user`; dependency này ánh xạ
+`sub` (`auth.users.id`) qua `users.auth_user_id`, từ chối tài khoản khóa và trả:
 
 - `users.id`: định danh nghiệp vụ dùng cho FK/phạm vi;
 - `users.role_id`: vai trò được phép;
 - `users.is_active`: trạng thái khóa.
 
+Không dùng riêng `get_current_auth_user` ở route nghiệp vụ vì như vậy sẽ bỏ qua trạng thái khóa.
 Không dùng claim `role` của Supabase làm vai trò nghiệp vụ. Không nhận `userId` chủ sở hữu từ
 client. Dependency phân quyền theo vai trò sẽ được bổ sung cùng module đầu tiên cần nó; cho tới khi
 đó `/api/auth/me` là endpoint đã kiểm chứng duy nhất.

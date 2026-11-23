@@ -104,6 +104,8 @@ hai vai trò trở lên mới đưa lên `src/components/`, `src/lib/`, `src/typ
   - Interceptor request gắn `Authorization: Bearer <token>` từ biến token trong bộ nhớ.
   - Interceptor response: gặp 401 thì kết thúc phiên Supabase local, xóa token và tải lại hẳn trang
     `/login` bằng `window.location.replace`; tải lại hẳn để xóa sạch cache dữ liệu của phiên cũ.
+    Riêng `/api/auth/me` trong `login()` đặt `skipAuthRedirect`: `AuthContext` tự đăng xuất rồi giữ
+    nguyên trang để hiện đúng lỗi tài khoản khóa hoặc chưa có hồ sơ.
 - **Khuôn response** của backend là `ApiResponse<T>` `{ success, data, message, errors }`, kể cả khi
   lỗi (D04); kiểu này ở `src/types/auth.ts`.
 - **Lỗi** đọc qua `toApiError(err)` → `ApiError { message, errors, status }`. Cách hiện từng mã:

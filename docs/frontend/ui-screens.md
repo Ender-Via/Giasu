@@ -301,7 +301,9 @@ xuống dòng (`whitespace-pre-wrap`), không render HTML.
 2. Thành công → `router.replace("/")`.
 3. 401 → "Email hoặc mật khẩu không đúng.", giữ chữ đã gõ (AC-AUTH-04).
 4. 429 → hiện message, khóa form, nút đếm ngược 60 giây (D08).
-5. Không có "Quên mật khẩu", "Ghi nhớ đăng nhập", tài khoản demo (D17).
+5. Supabase trả mã `email_not_confirmed` → "Email chưa được xác nhận. Vui lòng kiểm tra hộp thư.".
+6. `/api/auth/me` lỗi → xóa phiên Supabase vừa tạo, giữ trang đăng nhập để hiện message.
+7. Không có "Quên mật khẩu", "Ghi nhớ đăng nhập", tài khoản demo (D17).
 
 **Hiện trạng:** trang đã có. Việc phải sửa: thêm [5], đổi màu xám/đen mặc định
 sang token (`design-system.md` §3.1). Làm cùng thẻ SCR-AUTH-02.
