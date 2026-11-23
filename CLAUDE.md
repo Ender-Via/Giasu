@@ -3,8 +3,8 @@
 Hướng dẫn cho Claude Code (và trợ lý AI khác) khi làm việc trong repo này.
 
 ## Tổng quan
-Nền tảng tìm việc gia sư, 3 vai trò `Admin`, `Tutor`, `Parent`. Backend ASP.NET Core 10 dựng
-4 lớp (`backend/GiaSu.*`), frontend Next.js 16 (`frontend/`). Database PostgreSQL trên Supabase,
+Nền tảng tìm việc gia sư, 3 vai trò `Admin`, `Tutor`, `Parent`. Backend FastAPI theo lớp
+router → service → repository (`backend/app`), frontend Next.js 16 (`frontend/`). Database PostgreSQL trên Supabase,
 **cả nhóm dùng chung một database**. Code, chú thích, message lỗi, commit viết tiếng Việt.
 
 ## Đọc trước khi sửa code
@@ -20,13 +20,12 @@ FR hay SCR còn ghi "chưa viết" thì không code. Tài liệu mâu thuẫn: t
 
 ## Lệnh
 ```bash
-dotnet build backend/GiaSu.slnx -warnaserror   # DoD: 0 warning
-dotnet test backend/GiaSu.slnx
+cd backend && uv run ruff check . && uv run pytest
 cd frontend && npm run lint && npm run build
 ```
 
 ## Không được làm
-- Không `dotnet ef database update`, `database drop`, hay chạy SQL ghi dữ liệu lên DB dùng chung
+- Không `alembic upgrade`, `alembic stamp`, drop schema/database, hay chạy SQL ghi dữ liệu lên DB dùng chung
   khi người dùng chưa đồng ý rõ ràng (D11).
 - Không thêm package mới, không sửa `docs/` khi người dùng chưa yêu cầu.
 - Không commit secret; không `git push --force`, `git reset --hard` trên nhánh đã push.

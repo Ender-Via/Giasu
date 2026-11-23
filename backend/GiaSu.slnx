@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="GiaSu.API/GiaSu.API.csproj" />
-  <Project Path="GiaSu.Application/GiaSu.Application.csproj" />
-  <Project Path="GiaSu.Domain/GiaSu.Domain.csproj" />
-  <Project Path="GiaSu.Infrastructure/GiaSu.Infrastructure.csproj" />
-  <Project Path="GiaSu.Tests/GiaSu.Tests.csproj" />
-</Solution>

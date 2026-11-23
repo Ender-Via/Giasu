@@ -9,13 +9,13 @@ duyệt PR. SV4 giữ file này (thẻ S02-09).
 
 | Loại | Công cụ | Phạm vi | Ai viết |
 | :-- | :-- | :-- | :-- |
-| Unit test | xUnit, `backend/GiaSu.Tests` | Mỗi `BR-xx` trong Service và Validator | Người làm thẻ backend; SV4 bổ sung ca biên |
+| Unit/API test | pytest, `backend/tests` | Service, repository và endpoint FastAPI; mỗi `BR-xx` | Người làm thẻ backend; SV4 bổ sung ca biên |
 | Kiểm thử API | Postman Collection, chạy bằng Runner hoặc `newman` | Mỗi endpoint: đúng, dữ liệu sai, sai vai trò, ngoài phạm vi | Người làm thẻ backend; SV4 gom và dọn |
 | Kiểm thử giao diện | Kiểm tay theo checklist §3.3 | Mỗi màn hình SCR | Người làm thẻ frontend; người review chạy lại |
 | Nghiệm thu | AC trong `requirements/acceptance-criteria.md` | Mỗi AC là một kịch bản | Kịch bản theo vai trò ở S12 |
 
-CI (`.github/workflows/ci.yml`) chạy `dotnet build -warnaserror`, `dotnet test`, `npm run lint`,
-`npm run build` cho mọi PR.
+CI (`.github/workflows/ci.yml`) chạy Ruff, pytest, Alembic trên PostgreSQL test, `npm run lint`
+và `npm run build` cho mọi PR.
 
 ### 0.2 Gắn ca kiểm với mã
 
@@ -23,7 +23,7 @@ CI (`.github/workflows/ci.yml`) chạy `dotnet build -warnaserror`, `dotnet test
 - Mục "Đã test thế nào" của PR liệt kê theo mã AC: mỗi dòng là mã AC, đã làm gì, ra kết quả gì.
   AC không kiểm được thì ghi lý do.
 - Tên unit test nói điều kiện và kết quả, kèm mã trong chú thích:
-  `public void Gui_duyet_khi_chua_co_minh_chung_thi_bi_tu_choi() // AC-PROFILE-06, BR-04`.
+  `def test_gui_duyet_khi_chua_co_minh_chung_thi_bi_tu_choi():  # AC-PROFILE-06, BR-04`.
 - Postman: tên folder có mã module (`PROFILE — Hồ sơ gia sư (FR-03, FR-04, FR-36)`), tên request
   `<mã AC> - <mô tả> (<status>)`, ví dụ `AC-PROFILE-02 - Tạo hồ sơ thứ 6 (409)`.
 - Cuối kỳ (S13), SV4 chép các ca này sang sheet P4T_01 thành `TC-xx`, mỗi TC ghi mã FR/AC.
@@ -40,14 +40,14 @@ Cả nhóm dùng chung một database, nên:
   sinh). Tài khoản tạo thêm để thử đăng ký dùng email `test.<tên>.<số>@giasu.local`.
 - Thao tác gửi thông báo tới người thật hoặc không hoàn tác được (duyệt, từ chối, ghi nhận thanh
   toán) chỉ làm trên dữ liệu `[TEST]`.
-- `POST /api/auth/login` và `/register` giới hạn 5 lần/phút/IP; gặp 429 thì chờ hết phút.
+- Đăng nhập/đăng ký đi qua Supabase Auth và giới hạn 5 lần/phút/IP theo D08; gặp 429 thì chờ hết phút.
 
 ---
 
 ## 1. Lệnh
 
 ```bash
-dotnet test backend/GiaSu.slnx
+cd backend && uv run ruff check . && uv run pytest
 npx newman run docs/testing/GiaSu.postman_collection.json -e docs/testing/local.postman_environment.json
 cd frontend && npm run lint && npm run build
 ```
@@ -59,15 +59,23 @@ tài khoản cá nhân, chỉ tài khoản test.
 
 ## 2. Backend
 
-### 2.1 Unit test
+### 2.1 pytest
 
-- Test Service bằng repository giả viết tay (class nhỏ cài interface trong `GiaSu.Tests`), không
-  thêm thư viện mock khi chưa hỏi GitHub owner (D03).
+- Test Service bằng repository giả nhỏ hoặc fixture SQLAlchemy; test endpoint dùng FastAPI app với
+  dependency override. Không gọi Supabase/JWKS thật trong unit test: dùng cặp khóa test và resolver cục bộ.
 - Mỗi `BR-xx` của thẻ: một ca đúng, một ca vi phạm, và ca biên (đúng giới hạn, vượt 1). Ví dụ
   BR-23: có 4 hồ sơ tạo được, có 5 hồ sơ thì 409.
-- Validator test bằng cách gọi thẳng `Validate(...)` như `LoginRequestValidatorTests`.
+- Auth tối thiểu có token đúng, thiếu, sai chữ ký, hết hạn, tài khoản khóa và Supabase user chưa có
+  hồ sơ nghiệp vụ.
 
-### 2.2 Postman
+### 2.2 Migration
+
+- Dùng PostgreSQL local/test có schema `auth.users`; không dùng SQLite để chứng minh Alembic.
+- Với schema cũ: chạy baseline `0001_initial_auth`, chèn row di sản, nâng `head`, rồi kiểm row/cột
+  cũ còn nguyên và FK/index mới tồn tại.
+- Không chạy, stamp hoặc downgrade DB Supabase dùng chung trong lúc làm PR (D11).
+
+### 2.3 Postman
 
 - Collection chạy đúng thứ tự: folder 0 đăng nhập 3 vai trò và lưu token vào biến; folder cuối là
   ca giới hạn tần suất.

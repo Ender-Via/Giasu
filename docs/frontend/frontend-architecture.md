@@ -79,8 +79,8 @@ hai vai trò trở lên mới đưa lên `src/components/`, `src/lib/`, `src/typ
 - **`RoleGuard`** bọc nội dung trong `layout.tsx` của mỗi vai trò, nhận `allowedRole`. Đang khôi
   phục phiên thì hiện vòng quay; không có phiên thì sang `/login`; sai vai trò thì về `/`. Không có
   trang "Không có quyền" riêng.
-- Chặn ở giao diện chỉ để điều hướng. Quyền thật do backend kiểm tra ở mọi request (`[Authorize]`,
-  `ActiveUserMiddleware`, phạm vi dữ liệu trả 404).
+- Chặn ở giao diện chỉ để điều hướng. Quyền thật do backend kiểm tra ở mọi request (dependency
+  `get_current_auth_user`, service kiểm `users.is_active`, phạm vi dữ liệu trả 404).
 - Bản đồ màn hình, menu và hành vi điều hướng: `ui-screens.md` §2.
 
 ---
@@ -89,9 +89,9 @@ hai vai trò trở lên mới đưa lên `src/components/`, `src/lib/`, `src/typ
 
 - Trang có gọi API hay dùng hook là Client Component (`"use client"`). Trang khung chỉ hiện
   `UnderConstruction` không cần.
-- Dữ liệu chỉ lấy ở trình duyệt, qua `apiClient` bọc trong TanStack Query. Không lấy dữ liệu trong
-  Server Component, không có Route Handler (`route.ts`) hay Server Action, không nói chuyện thẳng
-  với PostgreSQL hay Supabase (D01).
+- Dữ liệu nghiệp vụ chỉ lấy ở trình duyệt qua `apiClient` bọc trong TanStack Query. Ngoại lệ duy
+  nhất là `supabase.auth` cho đăng nhập/đăng xuất/refresh phiên; frontend không nói chuyện thẳng
+  với PostgreSQL hay bảng/Storage Supabase (D01).
 - Next.js dựng sẵn khung trang tĩnh lúc build (`○ (Static)` trong kết quả `npm run build`); dữ liệu
   điền vào sau khi trang chạy ở trình duyệt.
 
@@ -102,14 +102,16 @@ hai vai trò trở lên mới đưa lên `src/components/`, `src/lib/`, `src/typ
 - **`apiClient`** trong `src/lib/axios.ts` là Axios instance duy nhất: `baseURL` lấy từ
   `NEXT_PUBLIC_API_BASE_URL` (mặc định `http://localhost:5015`), header JSON.
   - Interceptor request gắn `Authorization: Bearer <token>` từ biến token trong bộ nhớ.
-  - Interceptor response: gặp 401 (trừ request đăng nhập) thì xóa token và tải lại hẳn trang
+  - Interceptor response: gặp 401 thì kết thúc phiên Supabase local, xóa token và tải lại hẳn trang
     `/login` bằng `window.location.replace`; tải lại hẳn để xóa sạch cache dữ liệu của phiên cũ.
+    Riêng `/api/auth/me` trong `login()` đặt `skipAuthRedirect`: `AuthContext` tự đăng xuất rồi giữ
+    nguyên trang để hiện đúng lỗi tài khoản khóa hoặc chưa có hồ sơ.
 - **Khuôn response** của backend là `ApiResponse<T>` `{ success, data, message, errors }`, kể cả khi
   lỗi (D04); kiểu này ở `src/types/auth.ts`.
 - **Lỗi** đọc qua `toApiError(err)` → `ApiError { message, errors, status }`. Cách hiện từng mã:
   `ui-screens.md` §4.2.
 - **Kiểu dữ liệu** viết tay trong `src/types/`, phản chiếu record DTO của backend, giữ nguyên tên
-  trường camelCase của JSON. Đối chiếu với Swagger (`http://localhost:5015/swagger`) khi backend
+  trường camelCase của JSON. Đối chiếu với OpenAPI (`http://localhost:5015/docs`) khi backend
   đã có; trước đó theo dòng "API" của mục SCR và FR. Không sinh kiểu từ OpenAPI (cần thêm package,
   D03).
 - **Vai trò được gọi** từng endpoint: `business/user-roles.md` §3; phần đã có: `api/da-trien-khai.md`.
@@ -138,25 +140,25 @@ phụ huynh chuyển giữa các màn hình (`ui-screens.md` §10).
 
 | Việc | Cách làm | Quyết định |
 | :---- | :---- | :---- |
-| Đăng nhập | `login()` gọi `POST /api/auth/login`, nhận `token`, `expiresAtUtc`, `userId`, `fullName`, `role` | D06 |
-| Giữ token | Biến trong bộ nhớ là nguồn chính; `localStorage` (`giasu_token`, `giasu_token_expiry`) chỉ để khôi phục phiên khi tải lại trang | D06 |
-| Khôi phục phiên | Lúc mở app, `AuthProvider` đọc token đã lưu rồi gọi `GET /api/auth/me`; xong mới đặt `isLoading` = `false` | |
-| Hết hạn | JWT hạn 10 giờ. Timer theo `expiresAtUtc` chỉ xóa phiên ở máy, không gọi API; `RoleGuard` thấy mất phiên thì sang `/login` | D06 |
-| Đăng xuất | Chỉ nút Đăng xuất gọi `logout()`: `POST /api/auth/logout` (thu hồi phiên trên mọi máy), rồi xóa phiên ở máy | D06 |
-| Bị thu hồi | Bị vô hiệu hóa, đổi vai trò, đặt lại mật khẩu, đăng xuất ở máy khác → request kế tiếp nhận 401 → interceptor đưa về `/login` | D06 |
-| Làm mới token | Không có refresh token; hết 10 giờ thì đăng nhập lại | D06 |
+| Đăng nhập | `login()` gọi `supabase.auth.signInWithPassword()`, rồi gửi access token tới `GET /api/auth/me` để lấy `userId`, `fullName`, `role` | D06 |
+| Giữ token | Supabase JS persist session; Axios chỉ giữ access token hiện tại trong bộ nhớ | D06 |
+| Khôi phục phiên | `AuthProvider` gọi `supabase.auth.getSession()`, gắn access token rồi gọi `/api/auth/me`; xong mới đặt `isLoading = false` | D06 |
+| Hết hạn | Supabase JS tự refresh; sự kiện `TOKEN_REFRESHED` cập nhật Axios và tải lại hồ sơ nghiệp vụ | D06 |
+| Đăng xuất | `supabase.auth.signOut({ scope: "local" })`, xóa token/bộ nhớ và về `/login` | D06 |
+| Bị khóa | `/api/auth/me` và API nghiệp vụ kiểm `users.is_active`; 401 làm interceptor kết thúc phiên local | D06 |
+| Vai trò | Không đọc claim role Supabase; luôn lấy `role` từ `/api/auth/me` | D05, D06 |
 
-Claim `role` là chuỗi tiếng Anh (`Admin`, `Tutor`, `Parent`); nhãn tiếng
+Trường `role` từ `/api/auth/me` là chuỗi tiếng Anh (`Admin`, `Tutor`, `Parent`); nhãn tiếng
 Việt lấy từ `ROLE_VIETNAMESE_LABELS` trong `DashboardLayout.tsx`.
 
 ---
 
 ## 7. Biến môi trường, chạy và kiểm tra
 
-- Chép `frontend/.env.example` thành `frontend/.env.local`. Biến duy nhất là
-  `NEXT_PUBLIC_API_BASE_URL` (địa chỉ backend). `.env.local` không commit.
-- Frontend chạy ở cổng 3000. Đổi cổng thì phải thêm origin vào `Cors:AllowedOrigins` trong
-  `appsettings.json` của backend.
+- Chép `frontend/.env.example` thành `frontend/.env.local`: `NEXT_PUBLIC_API_BASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `.env.local` không commit;
+  không dùng service-role key ở trình duyệt.
+- Frontend chạy ở cổng 3000. Đổi cổng thì phải thêm origin vào `CORS_ALLOWED_ORIGINS` của backend.
 
 ```bash
 cd frontend

@@ -13,10 +13,11 @@ sửa mâu thuẫn trong biểu mẫu; mỗi quyết định đó được ghi t
 ## 1. Nền tảng
 
 ### D01 — Kiến trúc
-Khối đơn (monolith) **phân 4 lớp**: `Domain` ← `Application` ← `Infrastructure`, `API`.
-Phụ thuộc đi một chiều; `Domain` không tham chiếu lớp nào. Frontend tách riêng, chỉ nói chuyện
-với backend qua REST API.
-- Lý do: đủ tách trách nhiệm cho môn OOAD, dễ học, dễ test; nhóm đã quen thuộc mô hình này.
+Khối đơn (modular monolith) FastAPI, mỗi module đi theo một chiều:
+`api/router` → `service` → `repository` → SQLAlchemy. DTO Pydantic nằm ở `schemas`, model và
+session ở `db`, hạ tầng dùng chung ở `core`. Frontend tách riêng, chỉ nói chuyện với backend qua
+REST API; riêng xác thực, Next.js gọi Supabase Auth để lấy phiên rồi gửi access token cho backend.
+- Lý do: tách HTTP, nghiệp vụ và truy vấn đủ rõ để test, đồng thời phù hợp hệ sinh thái Python.
 - Đánh đổi: không scale độc lập từng phần.
 
 ### D02 — Repo và tài liệu
@@ -29,11 +30,12 @@ mẫu OOAD trên Drive.
 ### D03 — Công nghệ
 | Phần | Chọn |
 | :-- | :-- |
-| Backend | ASP.NET Core 10 Web API, EF Core 10, FluentValidation, Serilog, Swagger |
+| Backend | Python, FastAPI, SQLAlchemy 2, Alembic, Pydantic, PyJWT, OpenAPI |
 | Database | PostgreSQL trên Supabase, **cả nhóm dùng chung một database** |
+| Xác thực / tệp | Supabase Auth + JWKS; Supabase Storage bucket private |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4 |
 | Gọi API | Axios (`apiClient`), TanStack Query, React Hook Form |
-| Test | xUnit (`backend/GiaSu.Tests`), Postman Collection |
+| Test | pytest (`backend/tests`), Ruff, Postman Collection |
 
 Không thêm package mới khi chưa hỏi GitHub owner.
 
@@ -45,33 +47,39 @@ Mọi response, kể cả lỗi, đều là `ApiResponse<T>`:
 Lỗi validate: `errors` là danh sách message tiếng Việt. Frontend chỉ đọc lỗi qua `toApiError()`.
 
 ### D05 — Vai trò
-Ba vai trò, claim `role` là hằng số tiếng Anh trong `GiaSu.Domain.Constants.Roles`:
+Ba vai trò nghiệp vụ là hằng số tiếng Anh trong backend:
 `Admin` (id 1), `Tutor` (id 2, Sinh viên/Gia sư), `Parent` (id 3, Phụ huynh).
+Không tin claim `role` trong token Supabase; backend đọc vai trò từ `users.role_id` ở mỗi request.
 Học sinh **không** đăng nhập; là dữ liệu do Phụ huynh quản lý (xem D24).
 
 ### D06 — Xác thực
-JWT HS256, sống 10 giờ, claim `sub`, `role`, `tv` (token version). `ActiveUserMiddleware` kiểm
-mỗi request: tài khoản còn hoạt động, vai trò chưa đổi, `tv` khớp `users.token_version`.
-Đăng xuất, đổi vai trò, khóa tài khoản đều tăng `token_version` để token cũ mất hiệu lực ngay.
-Mật khẩu băm bằng `PasswordHasher<T>` (NFR-02). Frontend giữ token trong bộ nhớ, `localStorage`
-chỉ để khôi phục phiên.
+Supabase Auth quản lý email, mật khẩu, access token và refresh token. Next.js đăng nhập bằng
+`supabase.auth.signInWithPassword()`, tự làm mới phiên, rồi Axios gửi access token dạng Bearer.
+Backend xác minh chữ ký JWT bằng JWKS của project cùng `iss`, `aud`, `exp`; `sub` là
+`auth.users.id`. Backend dùng `users.auth_user_id` để tìm tài khoản nghiệp vụ, rồi kiểm
+`users.is_active` và đọc `users.role_id`. Không dùng service-role key để xác minh request.
+Project dùng signing key bất đối xứng `ES256`/`RS256`; không đưa JWT shared secret `HS256` vào app.
+
+Đăng xuất xóa phiên Supabase trên trình duyệt; access token đã phát chỉ hết hiệu lực khi hết hạn.
+Khóa tài khoản nghiệp vụ có hiệu lực ngay ở request backend kế tiếp vì luôn kiểm `is_active`.
 
 ### D07 — Phạm vi dữ liệu: 404 chứ không phải 403
 Đúng vai trò nhưng bản ghi không thuộc mình (tin của phụ huynh khác, lộ trình của người khác)
 → **404**. Sai vai trò → **403**. Không để người dùng dò được bản ghi nào tồn tại.
-Phạm vi lấy từ `sub` trong token, không bao giờ từ id client gửi lên.
+Phạm vi lấy từ tài khoản nghiệp vụ ánh xạ qua `sub` → `users.auth_user_id`, không bao giờ từ id
+client gửi lên.
 
 ### D08 — Chống dò mật khẩu
-`POST /api/auth/login` và `POST /api/auth/register` mỗi endpoint giới hạn **5 lần/phút/IP**
-(trả 429). Thay cho quy tắc "khóa tài khoản
+Đăng nhập và đăng ký đi qua Supabase Auth; project cấu hình giới hạn **5 lần/phút/IP** cho hai
+luồng (trả 429) và frontend phải xử lý 429. Thay cho quy tắc "khóa tài khoản
 15 phút sau 5 lần sai" trong SSD-01/SSD-27 (khóa tài khoản để người khác cố tình khóa hộ được).
 
 ### D09 — Header bảo mật
 Mọi response có `X-Content-Type-Options: nosniff` và `X-Frame-Options: DENY`.
 
 ### D10 — CI
-GitHub Actions (`.github/workflows/ci.yml`) chạy cho mọi PR: backend `build -warnaserror` +
-`dotnet test`, frontend `lint` + `build`. PR chỉ merge khi CI xanh.
+GitHub Actions (`.github/workflows/ci.yml`) chạy cho mọi PR: backend `ruff check` + `pytest` +
+Alembic trên PostgreSQL test, frontend `lint` + `build`. PR chỉ merge khi CI xanh.
 
 ### D11 — Migration
 SV3 (DB) chốt ERD ở Sprint 01. Sau đó người làm module backend tự tạo migration cho bảng của
@@ -84,8 +92,10 @@ module mình, nhưng:
 **SV1 Lộc quản trị project Supabase**: tạo DB, cấp connection string riêng từng người, thu hồi khi
 cần. Ai cần quyền gì trên Supabase thì xin SV1.
 
-App không tự chạy migration. Không bao giờ `database drop` hay `database update` về migration cũ
-trên DB dùng chung.
+Alembic quản lý migration. `0001_initial_auth` là baseline tương đương migration EF
+`InitialAuth`; DB dùng chung đã có schema đó phải được đối chiếu rồi `alembic stamp
+0001_initial_auth` trước khi nâng tiếp. App không tự chạy migration. Không bao giờ downgrade,
+drop database/schema hoặc sửa lịch sử Alembic trên DB dùng chung.
 
 ---
 
@@ -105,9 +115,9 @@ kèm mã giao dịch), gia sư xác nhận đã nhận. Ghi nhận hai lần cù
 (NFR-03).
 
 ### D15 — Tác vụ định kỳ
-Dùng `BackgroundService` của .NET, chạy mỗi giờ: nhắc gia hạn tin 30 ngày (FR-35), tự xác nhận
+Dùng tiến trình worker FastAPI/Python riêng được scheduler gọi mỗi giờ: nhắc gia hạn tin 30 ngày (FR-35), tự xác nhận
 buổi học sau 48 giờ (D27), cảnh báo lệch tiến độ (FR-23), nhắc học phí quá hạn (FR-26), nhắc lịch
-học, tính lại điểm uy tín. Không dùng Hangfire/Quartz.
+học, tính lại điểm uy tín. Không chạy các tác vụ này trong process web nhiều worker.
 
 ### D16 — Tệp minh chứng
 Lưu ở Supabase Storage, bucket **private**, chỉ trả URL ký hạn 60 phút sau khi kiểm phạm vi.
@@ -126,7 +136,7 @@ khẩu / đặt lại mật khẩu qua email, "ghi nhớ đăng nhập", đăng 
 | Khái niệm | Tên trong code | Bảng | Ghi chú |
 | :-- | :-- | :-- | :-- |
 | Tin tìm gia sư | `TutorRequest` | `tutor_requests` | bỏ tên "Tutor Job" |
-| Phiếu ứng tuyển | `TutorApplication` | `tutor_applications` | không dùng `Application` vì trùng tên project `GiaSu.Application` |
+| Phiếu ứng tuyển | `TutorApplication` | `tutor_applications` | không dùng tên chung `Application` |
 | Lộ trình học | `LearningRoadmap` | `learning_roadmaps` | bỏ tên "LearningPath" |
 | Kế hoạch theo tuần | `RoadmapPlanItem` | `roadmap_plan_items` | thay "LearningPlan" |
 | Buổi học | `ClassSession` | `class_sessions` | SSD đang ghi "Lesson" → đổi theo |
@@ -236,7 +246,7 @@ hiệu "Đã xác thực" trên hồ sơ và trong danh sách ứng viên; phụ
 Từ 1/7/2025 Việt Nam bỏ cấp quận/huyện, còn **34 tỉnh/thành** và cấp phường/xã. Biểu mẫu và SSD
 còn ghi "quận" (SSD-03, prototype UI-02) — theo quyết định này:
 - `province`: chọn từ danh mục cố định 34 giá trị dưới đây, lưu đúng chuỗi. Backend có hằng số
-  `Provinces` trong `GiaSu.Domain.Constants`, frontend có `src/lib/provinces.ts`, hai danh sách phải
+  `PROVINCES` trong `backend/app/core/provinces.py`, frontend có `src/lib/provinces.ts`, hai danh sách phải
   trùng.
 - `ward` (tin) / `teaching_wards` (hồ sơ, 1–5 giá trị): chữ tự do ≤ 100 ký tự. Không làm danh mục
   phường/xã (hơn 3.000 giá trị) trong MVP.

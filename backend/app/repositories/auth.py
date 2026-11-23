@@ -1,0 +1,15 @@
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.models import User
+
+
+class AuthRepository:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def find_by_auth_user_id(self, auth_user_id: UUID) -> User | None:
+        statement = select(User).where(User.auth_user_id == auth_user_id)
+        return self.db.scalar(statement)

@@ -1,25 +1,40 @@
 # Thiết kế database
 
-Bản phác để SV3 dựng ERD ở Sprint 01 (migration từng bảng do người làm module tạo, D11); ERD chốt xong thì cập nhật lại file này và
+Bản phác để SV3 dựng ERD ở Sprint 01 (migration Alembic từng bảng do người làm module tạo, D11); ERD chốt xong thì cập nhật lại file này và
 sheet **P3D_04_CoSoDuLieu**. Tên bảng snake_case số nhiều, khóa chính `id uuid` (riêng `roles`,
 `subjects` dùng `smallint`), thời gian `timestamptz` tên kết thúc `_at` (lưu UTC).
 Khóa ngoại mặc định `ON DELETE RESTRICT`; không xóa cứng dữ liệu nghiệp vụ.
 
 Trạng thái và quy tắc: `business/business-rules.md`. Tên lớp: `DECISIONS.md` D18. Khu vực: D37.
 
-## Đã có (migration `InitialAuth`)
+## Đã có (baseline `0001_initial_auth` + migration `0002_supabase_auth_mapping`)
 
 | Bảng | Cột chính |
 | :-- | :-- |
 | `roles` | `id`, `name` — seed 3 vai trò (D05) |
-| `users` | `id`, `role_id`, `full_name`, `login_identifier` (email, unique), `credential_reference` (hash), `is_active`, `token_version`, `created_at` |
+| `auth.users` | Do Supabase Auth quản lý; `id uuid` là định danh xác thực, email/mật khẩu/refresh token không do backend nghiệp vụ ghi |
+| `users` | `id` (định danh nghiệp vụ), `auth_user_id` (nullable trong bước chuyển tiếp, unique, FK `auth.users.id`), `role_id`, `full_name`, `login_identifier` (email cũ, unique), `credential_reference` (hash cũ, nullable), `is_active`, `token_version` (cột cũ), `created_at` |
+
+`0001_initial_auth` tái hiện đúng schema EF `InitialAuth` để Alembic có baseline. `0002` chỉ thêm
+ánh xạ Supabase và nới nullable cho hash cũ, không đổi/xóa `id`, `credential_reference`,
+`token_version` hay dữ liệu hiện có. Sau khi S01-04 hoàn tất chuyển tài khoản và mọi row có
+`auth_user_id`, một migration riêng mới được phép đặt cột này `NOT NULL`; PR nền hiện tại chưa làm.
+
+Quan hệ xác thực là `auth.users (1) — (0..1) users`. Xóa user Supabase bị `RESTRICT`; khóa tài
+khoản nghiệp vụ dùng `users.is_active`, vai trò dùng `users.role_id`.
+
+Sheet **P3D_04_CoSoDuLieu** mô tả mô hình đích gọn hơn: `users.id` đồng thời là FK đến
+`auth.users.id`, và `status` biểu diễn trạng thái tài khoản. Với dữ liệu `InitialAuth` đã tồn tại,
+đổi trực tiếp PK sẽ làm mất liên kết nên migration chuyển tiếp cố ý giữ `users.id`, thêm
+`auth_user_id`, và ánh xạ `status` sang `is_active`. Sau khi S01-04 hoàn tất backfill, nhóm phải
+chốt một migration riêng nếu muốn hợp nhất hai UUID; không thực hiện việc đó trong PR nền này.
 
 ## Cần thêm
 
 | Bảng | Cột chính | Quan hệ | Module |
 | :-- | :-- | :-- | :-- |
-| `tutors` | `user_id` (PK = FK users), `phone`, `verification_status`, `reputation_score` | 1–1 `users` | AUTH |
-| `parents` | `user_id` (PK = FK users), `phone`, `reputation_score` | 1–1 `users` | AUTH |
+| `tutors` | `user_id` (PK = FK users), `phone`, `verification_status`, `reputation_score` | 1–1 `users` | AUTH (S01-04) |
+| `parents` | `user_id` (PK = FK users), `phone`, `reputation_score` | 1–1 `users` | AUTH (S01-04) |
 | `students` | `id`, `parent_id`, `full_name`, `grade_level` | N–1 `parents` | REQUEST |
 | `subjects` | `id`, `name`, `education_level` | danh mục, seed | PROFILE |
 | `student_verifications` | `id`, `tutor_id`, `university`, `student_code`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at` | N–1 `tutors` | VERIFY |

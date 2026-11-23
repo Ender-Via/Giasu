@@ -1,5 +1,12 @@
 import axios, { AxiosError } from "axios";
 import type { ApiResponse } from "@/types/auth";
+import { supabase } from "@/lib/supabase";
+
+declare module "axios" {
+  interface AxiosRequestConfig {
+    skipAuthRedirect?: boolean;
+  }
+}
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5015";
@@ -9,35 +16,11 @@ export const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// --- Token: Context (in-memory) là nguồn chính theo D06 ---
-// AuthProvider gọi setAuthToken() mỗi khi login/logout/khôi phục phiên.
-// Biến này cho phép axios (nằm ngoài cây React) đọc được token đồng bộ,
-// mà KHÔNG cần đọc trực tiếp localStorage ở đây.
+// Supabase quản lý phiên bền vững; Axios chỉ giữ access token hiện tại trong bộ nhớ.
 let inMemoryToken: string | null = null;
 
-export function setAuthToken(token: string | null, expiresAtUtc?: string): void {
+export function setAuthToken(token: string | null): void {
   inMemoryToken = token;
-  if (typeof window === "undefined") return;
-  if (token) {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    if (expiresAtUtc) localStorage.setItem(EXPIRY_STORAGE_KEY, expiresAtUtc);
-  } else {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(EXPIRY_STORAGE_KEY);
-  }
-}
-
-const TOKEN_STORAGE_KEY = "giasu_token";
-const EXPIRY_STORAGE_KEY = "giasu_token_expiry";
-
-// Chỉ dùng lúc app khởi động để khôi phục phiên — sau đó dùng inMemoryToken.
-export function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-export function getStoredExpiresAt(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(EXPIRY_STORAGE_KEY);
 }
 
 // Request interceptor — đọc từ biến in-memory, không đọc localStorage
@@ -48,13 +31,14 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — CHỈ auto-redirect khi 401 KHÔNG đến từ chính login
+// Token đăng nhập do Supabase cấp, nên 401 từ API kết thúc phiên local. Luồng login
+// đặt skipAuthRedirect để AuthContext tự dọn phiên và giữ message của /api/auth/me.
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    const isLoginRequest = error.config?.url?.includes("/api/auth/login");
-    if (error.response?.status === 401 && !isLoginRequest) {
+    if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
       setAuthToken(null);
+      void supabase.auth.signOut({ scope: "local" });
       if (typeof window !== "undefined") {
         // Cố ý tải lại hẳn trang thay vì chuyển trang phía client: interceptor nằm
         // ngoài cây React nên không có router, và tải lại xóa sạch cache dữ liệu của
