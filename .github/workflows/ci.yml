@@ -39,6 +39,10 @@ jobs:
       - run: uv sync --locked --all-groups
       - run: uv run ruff check .
       - run: uv run pytest
+      - name: pytest trên PostgreSQL
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/giasu_test
+        run: uv run pytest
       - name: Kiểm tra migration từ schema InitialAuth
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -v ON_ERROR_STOP=1 \
