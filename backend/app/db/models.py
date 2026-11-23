@@ -1,7 +1,17 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, SmallInteger, Text, Uuid
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Numeric,
+    SmallInteger,
+    Text,
+    Uuid,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -40,3 +50,38 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     role: Mapped[Role] = relationship(back_populates="users")
+
+
+class Tutor(Base):
+    __tablename__ = "tutors"
+
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_tutors_users_user_id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    phone: Mapped[str] = mapped_column(Text, nullable=False)
+    verification_status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="Unverified", server_default="Unverified"
+    )
+    reputation_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+
+class Parent(Base):
+    __tablename__ = "parents"
+
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_parents_users_user_id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    phone: Mapped[str] = mapped_column(Text, nullable=False)
+    reputation_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+
+class Subject(Base):
+    __tablename__ = "subjects"
+    __table_args__ = (Index("ix_subjects_name", "name", unique=True),)
+
+    id: Mapped[int] = mapped_column(SmallInteger, primary_key=True, autoincrement=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
