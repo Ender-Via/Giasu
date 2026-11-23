@@ -7,10 +7,18 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.auth import router as auth_router
+from app.api.errors import register_service_error_handlers
+from app.api.subjects import router as subjects_router
+from app.api.tutor_profile_evidences import router as tutor_profile_evidences_router
+from app.api.tutor_profiles import router as tutor_profiles_router
 from app.core.config import get_settings
+from app.core.request_limits import RequestBodyLimitMiddleware
+from app.core.validation_errors import collect_validation_messages
 from app.schemas.common import ApiResponse
 
 logger = logging.getLogger(__name__)
+
+MAX_REQUEST_BODY_BYTES = 26 * 1024 * 1024
 
 
 def create_app() -> FastAPI:
@@ -20,6 +28,8 @@ def create_app() -> FastAPI:
         version="0.1.0",
         description="API FastAPI cho nền tảng tìm việc gia sư và quản lý quá trình dạy",
     )
+
+    application.add_middleware(RequestBodyLimitMiddleware, max_bytes=MAX_REQUEST_BODY_BYTES)
 
     application.add_middleware(
         CORSMiddleware,
@@ -50,11 +60,15 @@ def create_app() -> FastAPI:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        del request, exc
+        del request
         return JSONResponse(
             status_code=400,
-            content=ApiResponse[object].fail(errors=["Dữ liệu gửi lên không hợp lệ."]).model_dump(),
+            content=ApiResponse[object]
+            .fail(errors=collect_validation_messages(exc.errors()))
+            .model_dump(),
         )
+
+    register_service_error_handlers(application)
 
     @application.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -71,6 +85,9 @@ def create_app() -> FastAPI:
         return ApiResponse[dict[str, str]].ok({"status": "ok"})
 
     application.include_router(auth_router)
+    application.include_router(subjects_router)
+    application.include_router(tutor_profiles_router)
+    application.include_router(tutor_profile_evidences_router)
     return application
 
 
