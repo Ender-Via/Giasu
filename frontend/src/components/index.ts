@@ -1,4 +1,5 @@
 export * from "./Button";
+export * from "./Badge";
 export * from "./Form";
 export * from "./Table";
 export * from "./Pagination";

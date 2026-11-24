@@ -66,10 +66,19 @@ export class ApiError extends Error {
 }
 
 export function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) {
+    return error;
+  }
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiResponse<unknown> | undefined;
     const message = data?.message ?? "Đã xảy ra lỗi, vui lòng thử lại.";
     return new ApiError(message, data?.errors ?? null, error.response?.status ?? null);
+  }
+  if (typeof error === "string") {
+    return new ApiError(error, null, null);
+  }
+  if (error instanceof Error) {
+    return new ApiError(error.message, null, null);
   }
   return new ApiError("Đã xảy ra lỗi không xác định.", null, null);
 }
