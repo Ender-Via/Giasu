@@ -56,7 +56,7 @@ def _test_engine() -> Engine:
 def db_session() -> Generator[Session, None, None]:
     engine = _test_engine()
     Base.metadata.create_all(engine)
-    factory = sessionmaker(bind=engine, expire_on_commit=False)
+    factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     with factory() as session:
         session.add_all(
             [
