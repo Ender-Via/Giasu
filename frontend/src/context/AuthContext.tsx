@@ -8,6 +8,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiClient, setAuthToken, toApiError, ApiError } from "@/lib/axios";
 import { supabase } from "@/lib/supabase";
 import type { AuthError } from "@supabase/supabase-js";
@@ -53,12 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
+  // Xóa luôn cache TanStack Query để người đăng nhập sau trên cùng tab không thấy dữ liệu
+  // của phiên cũ (đăng xuất không tải lại trang như interceptor 401).
   const clearSession = useCallback(() => {
     setToken(null);
     setUser(null);
     setAuthToken(null);
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   const loadBusinessProfile = useCallback(
     async (accessToken: string, skipAuthRedirect = false) => {
