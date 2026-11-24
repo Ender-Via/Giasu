@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Annotated
 from uuid import UUID
 
@@ -7,8 +8,10 @@ from sqlalchemy.orm import Session
 from app.core.security import get_current_auth_user
 from app.db.session import get_db
 from app.repositories.auth import AuthRepository
-from app.schemas.auth import CurrentUserResponse
+from app.schemas.auth import CurrentUserResponse, RoleName
 from app.services.auth import AccountLockedError, AuthService
+
+FORBIDDEN_MESSAGE = "Bạn không có quyền thực hiện hành động này."
 
 
 def get_current_user(
@@ -33,3 +36,16 @@ def get_current_user(
         )
 
     return current_user
+
+
+def require_roles(*roles: RoleName) -> Callable[..., CurrentUserResponse]:
+    allowed = frozenset(roles)
+
+    def dependency(
+        current_user: Annotated[CurrentUserResponse, Depends(get_current_user)],
+    ) -> CurrentUserResponse:
+        if current_user.role not in allowed:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=FORBIDDEN_MESSAGE)
+        return current_user
+
+    return dependency
