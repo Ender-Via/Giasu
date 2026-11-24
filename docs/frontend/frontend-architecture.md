@@ -133,8 +133,8 @@ hai vai trò trở lên mới đưa lên `src/components/`, `src/lib/`, `src/typ
 | State của một màn hình | `useState` trong `page.tsx` | Bộ lọc, trang, hộp thoại đang mở; truyền xuống component con qua props |
 
 Không dùng store toàn cục (Redux, Zustand...) và không lưu dữ liệu nghiệp vụ vào `localStorage` hay
-`sessionStorage`. Hiện chưa màn hình nào giữ state trên URL. Chưa chốt cách giữ con đang chọn khi
-phụ huynh chuyển giữa các màn hình (`ui-screens.md` §10).
+`sessionStorage`. State trên URL chỉ có `?studentId=` của SCR-PAR-03 (chọn sẵn học sinh khi đăng
+tin). Học sinh đang chọn không được giữ khi phụ huynh chuyển giữa các màn hình (`ui-screens.md` §7).
 
 ### 6.2 Xác thực
 
