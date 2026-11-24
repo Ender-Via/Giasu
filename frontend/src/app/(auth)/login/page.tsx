@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
 import { toApiError } from "@/lib/axios";
-import { Button, Input, ApiErrorAlert, LoadingSpinner, Icons } from "@/components";
+import { Button, Input, ApiErrorAlert, LoadingSpinner, Icons, NoticeBanner } from "@/components";
+import { EMAIL_MAX_LENGTH, EMAIL_VALIDATE, trimValue } from "./_lib/auth-rules";
 
 interface LoginFormValues {
   email: string;
@@ -97,6 +99,11 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Dải báo khi đăng ký xong nhưng tự đăng nhập lỗi (SCR-AUTH-02 hành vi 3) */}
+        <Suspense fallback={null}>
+          <RegisteredNotice />
+        </Suspense>
+
         {/* Thông báo lỗi từ server (SCR-AUTH-01 [1]) */}
         {submitError ? (
           <div className="mb-4">
@@ -115,18 +122,8 @@ export default function LoginPage() {
             disabled={isButtonDisabled}
             placeholder="hoten@example.com"
             error={errors.email?.message}
-            {...register("email", {
-              setValueAs: (v: string) => (typeof v === "string" ? v.trim() : v),
-              required: "Vui lòng nhập email",
-              maxLength: {
-                value: 254,
-                message: "Email không được vượt quá 254 ký tự",
-              },
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: "Email không đúng định dạng",
-              },
-            })}
+            maxLength={EMAIL_MAX_LENGTH}
+            {...register("email", { setValueAs: trimValue, validate: EMAIL_VALIDATE })}
           />
 
           {/* Ô nhập Mật khẩu (SCR-AUTH-01 [3]) */}
@@ -176,8 +173,40 @@ export default function LoginPage() {
           </div>
         </form>
 
-        {/* Liên kết Đăng ký (SCR-AUTH-01 [5]): tạm ẩn vì route /register chưa có, bật lại khi làm S02-07 (SCR-AUTH-02) */}
+        {/* Liên kết Đăng ký (SCR-AUTH-01 [5]) */}
+        <p className="mt-6 text-center text-sm text-on-surface-variant">
+          Chưa có tài khoản?{" "}
+          <Link href="/register" className="font-semibold text-primary hover:underline">
+            Đăng ký
+          </Link>
+        </p>
       </div>
     </main>
+  );
+}
+
+// Đọc cờ ?registered=1 do SCR-AUTH-02 gắn khi tạo tài khoản xong mà bước tự đăng nhập lỗi.
+// Tách component riêng để bọc Suspense, trang vẫn dựng tĩnh được (useSearchParams).
+// Dải thành công tự ẩn sau 6 giây (ui-screens.md §4.2); ẩn bằng cách bỏ cờ khỏi URL.
+function RegisteredNotice() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isRegistered = searchParams.get("registered") === "1";
+
+  useEffect(() => {
+    if (!isRegistered) return;
+    const timer = setTimeout(() => router.replace("/login"), 6000);
+    return () => clearTimeout(timer);
+  }, [isRegistered, router]);
+
+  if (!isRegistered) return null;
+
+  return (
+    <div className="mb-4">
+      <NoticeBanner
+        message="Tạo tài khoản thành công, vui lòng đăng nhập."
+        onClose={() => router.replace("/login")}
+      />
+    </div>
   );
 }
