@@ -35,15 +35,15 @@ chốt một migration riêng nếu muốn hợp nhất hai UUID; không thực 
 | :-- | :-- | :-- | :-- |
 | `tutors` | `user_id` (PK = FK users), `phone`, `verification_status`, `reputation_score` | 1–1 `users` | AUTH (S01-04) |
 | `parents` | `user_id` (PK = FK users), `phone`, `reputation_score` | 1–1 `users` | AUTH (S01-04) |
-| `students` | `id`, `parent_id`, `full_name`, `grade_level` | N–1 `parents` | REQUEST |
+| `students` | `id`, `parent_id`, `full_name`, `grade_level` (1–12, lớp đang học), `created_at` | N–1 `parents` | REQUEST |
 | `subjects` | `id`, `name`, `education_level` | danh mục, seed | PROFILE |
 | `student_verifications` | `id`, `tutor_id`, `university`, `student_code`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at` | N–1 `tutors` | VERIFY |
-| `tutor_profiles` | `id`, `tutor_id`, `title`, `description`, `experience`, `education_level`, `teaching_mode`, `province`, `teaching_wards` (text[], 1–5), `expected_fee_per_session`, `status`, `availability`, `is_default`, `reject_reason`, `created_at`, `updated_at` | N–1 `tutors` | PROFILE |
+| `tutor_profiles` | `id`, `tutor_id`, `title`, `description`, `experience`, `education_level`, `teaching_mode`, `province`, `teaching_wards` (text[], 1–5), `expected_fee_per_session`, `status`, `availability`, `is_default`, `reject_reason`, `submitted_at`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` | N–1 `tutors` | PROFILE |
 | `tutor_profile_subjects` | `profile_id`, `subject_id` (PK ghép) | N–N | PROFILE |
 | `tutor_profile_evidences` | `id`, `profile_id`, `file_ref`, `file_name`, `content_type`, `size_bytes` | N–1 `tutor_profiles` | PROFILE |
-| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address`, `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `created_at` | N–1 `parents`, `students`, `subjects` | REQUEST |
+| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address` (ba cột này `null` khi `Online`), `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `submitted_at`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` | N–1 `parents`, `students`, `subjects` | REQUEST |
 | `saved_tutor_requests` | `tutor_id`, `request_id` (PK ghép), `saved_at` | N–N | SEARCH |
-| `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles` | APPLY |
+| `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles`; unique (`request_id`, `tutor_id`) WHERE `status` IN (`Pending`, `Viewed`, `TrialInvited`) | APPLY |
 | `conversations` | `id`, `application_id` (unique), `created_at` | 1–1 `tutor_applications` | CHAT |
 | `messages` | `id`, `conversation_id`, `sender_id`, `content`, `sent_at` | N–1 `conversations` | CHAT |
 | `learning_roadmaps` | `id`, `application_id` (unique), `tutor_id`, `parent_id`, `student_id`, `subject_id`, `goal`, `schedule_note`, `fee_per_session`, `start_date`, `end_date`, `status`, `parent_feedback` | 1–1 `tutor_applications` | ROADMAP |
@@ -64,4 +64,8 @@ chốt một migration riêng nếu muốn hợp nhất hai UUID; không thực 
 | `audit_logs` | `id`, `actor_id`, `entity`, `entity_id`, `action`, `from_status`, `to_status`, `created_at` | — | dùng chung (BR-22) |
 
 Ràng buộc nên đặt ở database (CHECK), không chỉ ở validator: các cột `status`, `stars` 1–5,
-`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`, `province` thuộc danh mục D37.
+`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`, `province` thuộc danh mục D37,
+`grade_level` 1–12, `sessions_per_week` 1–7.
+
+`submitted_at` là lần gửi duyệt gần nhất (danh sách chờ duyệt của Admin sắp theo cột này);
+`reviewed_by`, `reviewed_at` là lần duyệt/từ chối gần nhất (FR-04, FR-06).
