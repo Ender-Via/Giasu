@@ -56,6 +56,8 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     role: Mapped[Role] = relationship(back_populates="users")
+    tutor: Mapped["Tutor | None"] = relationship(back_populates="user", uselist=False)
+    parent: Mapped["Parent | None"] = relationship(back_populates="user", uselist=False)
 
 
 class Tutor(Base):
@@ -72,6 +74,8 @@ class Tutor(Base):
     )
     reputation_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
 
+    user: Mapped[User] = relationship(back_populates="tutor")
+
 
 class Parent(Base):
     __tablename__ = "parents"
@@ -83,6 +87,8 @@ class Parent(Base):
     )
     phone: Mapped[str] = mapped_column(Text, nullable=False)
     reputation_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+    user: Mapped[User] = relationship(back_populates="parent")
 
 
 class Subject(Base):
@@ -183,3 +189,4 @@ class TutorProfileEvidence(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     profile: Mapped[TutorProfile] = relationship(back_populates="evidences")
+

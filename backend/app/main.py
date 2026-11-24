@@ -13,7 +13,7 @@ from app.api.tutor_profile_evidences import router as tutor_profile_evidences_ro
 from app.api.tutor_profiles import router as tutor_profiles_router
 from app.core.config import get_settings
 from app.core.request_limits import RequestBodyLimitMiddleware
-from app.core.validation_errors import collect_validation_messages
+from app.core.validation_errors import GENERIC_VALIDATION_MESSAGE
 from app.schemas.common import ApiResponse
 
 logger = logging.getLogger(__name__)
@@ -61,10 +61,30 @@ def create_app() -> FastAPI:
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         del request
+        field_messages = {
+            "role": "Vui lòng chọn vai trò Gia sư hoặc Phụ huynh.",
+            "fullName": "Họ tên từ 2 đến 100 ký tự.",
+            "phone": "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.",
+            "email": "Email không đúng định dạng.",
+            "password": "Mật khẩu từ 8 đến 128 ký tự, có cả chữ và số.",
+            "acceptTerms": "Bạn cần đồng ý quy chế để tiếp tục.",
+        }
+        errors: list[str] = []
+        for error in exc.errors():
+            context_error = (error.get("ctx") or {}).get("error")
+            if error.get("type") == "value_error" and context_error is not None:
+                message = str(context_error)
+            else:
+                field = next(
+                    (str(part) for part in reversed(error["loc"]) if isinstance(part, str)), ""
+                )
+                message = field_messages.get(field, GENERIC_VALIDATION_MESSAGE)
+            if message not in errors:
+                errors.append(message)
         return JSONResponse(
             status_code=400,
             content=ApiResponse[object]
-            .fail(errors=collect_validation_messages(exc.errors()))
+            .fail(errors=errors or [GENERIC_VALIDATION_MESSAGE])
             .model_dump(),
         )
 

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:54322/postgres"
     supabase_url: str = "http://localhost:54321"
+    supabase_secret_key: str = ""
     supabase_jwt_audience: str = "authenticated"
     supabase_jwt_algorithms: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["ES256", "RS256"]
