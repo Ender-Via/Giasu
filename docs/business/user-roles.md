@@ -25,11 +25,11 @@ Một tài khoản đúng một vai trò, không đổi vai trò sau khi đăng 
 
 | Mã | Quy tắc |
 | :-- | :-- |
-| BR-SCOPE-01 | Mọi kiểm tra vai trò và phạm vi nằm ở backend, chạy lại ở **mỗi** request. Định danh người thao tác lấy từ claim `sub`, không nhận từ body hay query (D07). |
+| BR-SCOPE-01 | Mọi kiểm tra vai trò và phạm vi nằm ở backend, chạy lại ở **mỗi** request. Claim `sub` là `auth.users.id`; backend ánh xạ qua `users.auth_user_id` để lấy định danh nghiệp vụ, không nhận từ body hay query (D07). |
 | BR-SCOPE-02 | **Gia sư** chỉ thao tác trên: hồ sơ gia sư, yêu cầu xác thực, phiếu ứng tuyển, tin đã lưu **của mình**; lộ trình, buổi học, học phí, đánh giá của quan hệ dạy-học **mình là gia sư**. Xem được mọi tin `Recruiting` (công khai cho gia sư). |
 | BR-SCOPE-03 | **Phụ huynh** chỉ thao tác trên: học sinh, tin tìm gia sư **của mình**; phiếu ứng tuyển **vào tin của mình**; lộ trình, buổi học, học phí, đánh giá của quan hệ dạy-học **mình là phụ huynh**. Xem được hồ sơ gia sư đã ứng tuyển vào tin của mình. |
 | BR-SCOPE-04 | **Admin** xem và xử lý mọi hồ sơ, tin, yêu cầu xác thực, báo cáo vi phạm, số liệu thống kê. Admin **không** sửa nội dung hồ sơ, tin, lộ trình, buổi học, học phí của người dùng — chỉ duyệt, từ chối, xử lý vi phạm. |
-| BR-SCOPE-05 | Cách từ chối: sai vai trò → **403** ngay ở `[Authorize]`, trước khi xét bản ghi. Đúng vai trò nhưng bản ghi không tồn tại hoặc ngoài phạm vi → **404**, cùng một message, để không lộ bản ghi nào có thật. |
+| BR-SCOPE-05 | Cách từ chối: sai vai trò → **403** ngay ở dependency phân quyền FastAPI, trước khi xét bản ghi. Đúng vai trò nhưng bản ghi không tồn tại hoặc ngoài phạm vi → **404**, cùng một message, để không lộ bản ghi nào có thật. |
 | BR-SCOPE-06 | Hội thoại chat chỉ hai bên của phiếu ứng tuyển đọc và ghi (D26). Admin chỉ đọc tin nhắn khi xử lý báo cáo vi phạm có liên quan tới hội thoại đó (FR-30). |
 
 ---

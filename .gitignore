@@ -1,5 +1,5 @@
 # ================================
-# Visual Studio / .NET
+# Visual Studio / .NET (di sản trước FastAPI)
 # ================================
 .vs/
 bin/
@@ -72,6 +72,17 @@ TestResults/
 *.temp
 *.swp
 Logs/
+
+# ================================
+# Python / FastAPI
+# ================================
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 # ================================
 # Tài liệu: docs/ NẰM TRONG repo (D02). Chỉ chặn file Word/Excel tạm
 # ================================

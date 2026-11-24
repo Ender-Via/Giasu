@@ -1,13 +1,20 @@
 # Phần đã triển khai
 
-Danh sách những gì **đã có trên `develop`**. Tài liệu FR, SCR mô tả thiết kế đích; thứ gì không có
-ở đây thì coi là chưa có và kiểm code trước. Mỗi PR backend thêm hoặc sửa mục của mình ngay trong
-PR đó (checklist `api-conventions.md` §9).
+Danh sách những gì đã được kiểm chứng trong nhánh chuyển FastAPI. Tài liệu FR/SCR mô tả thiết kế
+đích; thứ không có ở đây vẫn coi là chưa triển khai.
 
-| Mục | Endpoint | Ghi chú | Thẻ / PR |
+| Mục | Endpoint / thành phần | Đã kiểm chứng | Phạm vi |
 | :-- | :-- | :-- | :-- |
-| Auth — đăng nhập | `POST /api/auth/login` | 5 lần/phút/IP (D08); sai email, sai mật khẩu, tài khoản khóa cùng 401 | S01-01 |
-| Auth — người dùng hiện tại | `GET /api/auth/me` | Trả `userId`, `fullName`, `role` | S01-01 |
-| Auth — đăng xuất | `POST /api/auth/logout` | Tăng `token_version`, mọi token cũ hết hiệu lực (D06) | S01-01 |
-| Schema | bảng `roles`, `users` | Migration `InitialAuth`; seed 3 vai trò; seed Admin `admin@giasu.local` khi bảng `users` trống | S01-01 |
-| Hạ tầng chung | — | `ApiResponse<T>`, `GlobalExceptionHandler`, `ActiveUserMiddleware`, `SecurityHeadersMiddleware`, CORS, Swagger (Development) | S01-01 |
+| Auth — hồ sơ hiện tại | `GET /api/auth/me` | JWT đúng trả `userId`, `fullName`, `role`; thiếu/sai/hết hạn 401; tài khoản khóa 401 cùng thông báo đăng nhập sai; chưa có hồ sơ nghiệp vụ 404 | pytest local |
+| Auth — frontend | Supabase `signInWithPassword` → Bearer token → `/api/auth/me` | TypeScript, ESLint và Next.js production build thành công | local build |
+| Xác minh token | JWKS của `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` | Kiểm chữ ký, `iss`, `aud`, `exp`, `sub`; test dùng cặp khóa RSA cục bộ, không gọi Supabase thật | pytest local |
+| Schema | `roles`, `users.auth_user_id` | Alembic nâng từ baseline `InitialAuth`, giữ row/hash/token_version cũ, tạo unique index và FK `auth.users.id` | PostgreSQL 16 local |
+| Hạ tầng chung | — | `ApiResponse<T>`, lỗi HTTP theo cùng khuôn, CORS, header `nosniff`/`DENY`, OpenAPI `/docs` | pytest/lint |
+
+Chưa triển khai trong PR nền này:
+
+- `POST /api/auth/register` và việc tạo đồng bộ `auth.users` + `users` + `tutors/parents`: thẻ
+  **S01-04** tiếp theo.
+- Không còn `POST /api/auth/login` hay `/logout` ở backend; Supabase Auth đảm nhiệm hai thao tác.
+- Chưa chạy/stamp migration trên DB Supabase dùng chung và chưa xác minh token với project thật vì
+  môi trường làm việc không có cấu hình Supabase.

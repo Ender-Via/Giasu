@@ -23,7 +23,7 @@ Biểu mẫu OOAD (`.xlsx` trên Drive nhóm) là **bản xuất** từ bộ tà
 | `api/api-conventions.md` | Khuôn module backend, route, status code, 400/409, 403/404, checklist PR |
 | `api/da-trien-khai.md` | Những gì **đã có** trên `develop` |
 | `database/database-design.md` | Bảng và cột (SV3 giữ phần ERD) |
-| `testing/testing-strategy.md` | xUnit, Postman, dữ liệu test, checklist kiểm một màn hình |
+| `testing/testing-strategy.md` | pytest, Alembic, Postman, dữ liệu test, checklist kiểm một màn hình |
 | `onboarding/team-workflow.md` | Luật nhóm, sprint 3 ngày, nhánh, commit, PR, Definition of Done |
 
 ## Khi tài liệu mâu thuẫn
