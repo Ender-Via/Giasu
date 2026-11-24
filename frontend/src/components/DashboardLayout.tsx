@@ -55,7 +55,7 @@ export default function DashboardLayout({
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen w-72 bg-surface-container-lowest shadow-[0_4px_20px_rgba(212,195,172,0.18)] z-50 flex flex-col justify-between px-6 py-6 transition-transform duration-300 overflow-y-auto ${
+        className={`fixed left-0 top-0 h-screen w-72 bg-surface-container-lowest border-r border-slate-200/80 shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between px-6 py-6 transition-transform duration-300 overflow-y-auto ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

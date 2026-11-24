@@ -18,7 +18,7 @@ Quy ước:
   quyết), vì đó là cách chứng minh kiểm soát có thật.
 - Dòng **Truy vết** ghi theo thứ tự `FR | BR/D | UC | NFR`.
 
-AC của module chưa viết chi tiết (`functional-requirements.md` §9) được thêm cùng thẻ `[Docs]` viết
+AC của module chưa viết chi tiết (`functional-requirements.md` §10) được thêm cùng thẻ `[Docs]` viết
 module đó.
 
 ---
@@ -212,3 +212,223 @@ module đó.
 - **Khi:** Lưu cấu hình với loại `Abc`.
 - **Thì:** 400; cấu hình cũ giữ nguyên.
 - **Truy vết:** FR-32 | §4 business-rules | UC-11 | NFR-06
+
+---
+
+## 5. REQUEST — Học sinh và tin tìm gia sư
+
+### AC-REQUEST-01 — Thêm và sửa học sinh
+- **Cho trước:** Phụ huynh chưa có học sinh.
+- **Khi:** Thêm học sinh `  Nguyễn Minh An  `, lớp 9; rồi sửa lớp thành 10.
+- **Thì:** Thêm 201, họ tên lưu đã bỏ khoảng trắng hai đầu; sửa 200; `GET /api/students/mine` trả đúng một học sinh, lớp 10.
+- **Truy vết:** FR-05 | D24 | UC-14
+
+### AC-REQUEST-02 — Học sinh sai dữ liệu
+- **Cho trước:** Phụ huynh đang đăng nhập.
+- **Khi:** Thêm học sinh với (a) họ tên 1 ký tự; (b) lớp 0; (c) lớp 13.
+- **Thì:** Cả ba 400 với `errors` chỉ đúng trường sai; không tạo học sinh.
+- **Truy vết:** FR-05 | D24 | UC-14 | NFR-06
+
+### AC-REQUEST-03 — Phạm vi học sinh
+- **Cho trước:** Phụ huynh A có học sinh S; phụ huynh B; một Gia sư.
+- **Khi:** B sửa S; B đăng tin với `studentId` của S; Gia sư gọi `POST /api/students`.
+- **Thì:** Lần lượt 404 "Không tìm thấy học sinh.", 404 "Không tìm thấy học sinh." (không tạo tin), 403.
+- **Truy vết:** FR-05 | BR-SCOPE-03, BR-SCOPE-05 | UC-14 | NFR-02
+
+### AC-REQUEST-04 — Đăng tin thành công
+- **Cho trước:** Phụ huynh có học sinh S lớp 11.
+- **Khi:** Đăng tin cho S: môn Toán, `UpperSecondary`, `Offline`, TP. Hồ Chí Minh, Phường Bến Thành, 2 buổi/tuần, 150.000–250.000 đ, yêu cầu "Sinh viên năm 3 trở lên, dạy tối thứ 3, thứ 6.". Body có thêm `status: "Recruiting"`, `expiresAt`.
+- **Thì:** 201; tin ở `PendingReview`, `expiresAtUtc = null` (server bỏ qua hai trường client gửi); mọi Admin đang hoạt động có một thông báo `ModerationQueue`; tin **không** có trong `GET /api/tutor-requests/search`.
+- **Truy vết:** FR-05 | BR-06, CC-04 | UC-14 | NFR-04
+
+### AC-REQUEST-05 — Tin sai dữ liệu
+- **Cho trước:** Phụ huynh có học sinh.
+- **Khi:** Đăng tin lần lượt với (a) `minFee = 300000`, `maxFee = 200000`; (b) `minFee = 40000`; (c) `sessionsPerWeek = 8`; (d) hình thức `Offline` không có phường/xã; (e) `province = "Quận 1"`; (f) `subjectId` không có trong danh mục; (g) yêu cầu 2001 ký tự.
+- **Thì:** Cả bảy 400 với `errors` chỉ đúng trường sai; không tạo tin.
+- **Truy vết:** FR-05 | BR-06, BR-24, D37 | UC-14 | NFR-06
+
+### AC-REQUEST-06 — Tin online không cần khu vực
+- **Cho trước:** Phụ huynh có học sinh.
+- **Khi:** Đăng tin hình thức `Online`, không có tỉnh, phường; rồi đăng tin `Online` khác có gửi kèm tỉnh, phường, địa chỉ.
+- **Thì:** Cả hai 201; cả hai tin có `province`, `ward`, `address` là `null`.
+- **Truy vết:** FR-05 | BR-06, D37 | UC-14
+
+### AC-REQUEST-07 — Sửa tin đang tuyển
+- **Cho trước:** Tin `Recruiting` có 2 phiếu `Pending`.
+- **Khi:** Phụ huynh đổi học phí tối đa rồi lưu.
+- **Thì:** 200; tin về `PendingReview`, biến mất khỏi kết quả tìm kiếm của gia sư; 2 phiếu vẫn `Pending`; Admin có thông báo `ModerationQueue`. Admin duyệt lại thì `expiresAtUtc` = thời điểm duyệt lại + 30 ngày.
+- **Truy vết:** FR-05, FR-06 | D33, BR-07 | UC-14
+
+### AC-REQUEST-08 — Không sửa tin đã kết thúc
+- **Cho trước:** Một tin `Hired`, một tin `Closed`.
+- **Khi:** Phụ huynh sửa từng tin.
+- **Thì:** Cả hai 409; nội dung tin không đổi.
+- **Truy vết:** FR-05 | §2.3 business-rules | UC-14
+
+### AC-REQUEST-09 — Đóng tin
+- **Cho trước:** Tin `Recruiting` có phiếu P1 `Pending`, P2 `Viewed`, P3 `TrialInvited`, P4 `Withdrawn`; một tin khác ở `PendingReview`.
+- **Khi:** Phụ huynh đóng tin thứ nhất, rồi đóng tin `PendingReview`.
+- **Thì:** Lần đầu 200: tin `Closed`, P1 và P2 `Rejected`, P3 `NotHired`, P4 vẫn `Withdrawn`; gia sư của P1, P2, P3 mỗi người một thông báo `ApplicationStatus`; `audit_logs` có dòng cho tin và cho từng phiếu đổi trạng thái. Lần sau 409, tin vẫn `PendingReview`.
+- **Truy vết:** FR-05 | §2.3, §2.4 business-rules, BR-22 | UC-14 | NFR-03, NFR-04
+
+### AC-REQUEST-10 — Phạm vi tin
+- **Cho trước:** Tin T của phụ huynh A; phụ huynh B.
+- **Khi:** B gọi xem, sửa, đóng T; B gọi `GET /api/tutor-requests/mine`.
+- **Thì:** Xem, sửa, đóng đều 404 "Không tìm thấy tin."; danh sách của B không có T.
+- **Truy vết:** FR-05 | BR-SCOPE-03, BR-SCOPE-05 | UC-14 | NFR-02
+
+---
+
+## 6. ADMIN-REVIEW — Duyệt hồ sơ và tin
+
+### AC-ADMIN-REVIEW-01 — Danh sách hồ sơ chờ duyệt
+- **Cho trước:** Hồ sơ H1 gửi duyệt lúc 08:00, H2 lúc 09:00 (cả hai `PendingReview`); H3 `Draft`; H4 `Approved`.
+- **Khi:** Admin gọi `GET /api/tutor-profiles` không có `status`, rồi `status=Draft`.
+- **Thì:** Lần đầu trả đúng H1 rồi H2 (cũ nhất trước), không có H3, H4; lần sau 400.
+- **Truy vết:** FR-04 | §2.1 business-rules | UC-02
+
+### AC-ADMIN-REVIEW-02 — Duyệt hồ sơ
+- **Cho trước:** Hồ sơ H `PendingReview` có 2 minh chứng, trước đó từng bị từ chối với lý do "Thiếu bảng điểm.".
+- **Khi:** Admin mở chi tiết H rồi duyệt.
+- **Thì:** Chi tiết có 2 `evidences[].url` mở được trong 60 phút, khối `tutor` có `verificationStatus`, `rejectReason` là lý do cũ. Sau khi duyệt: H `Approved`, `rejectReason = null`, `reviewedBy` là Admin đó; gia sư nhận `ModerationResult`; `audit_logs` có dòng `PendingReview → Approved`; gia sư dùng được H để ứng tuyển (AC-APPLY-01).
+- **Truy vết:** FR-04 | BR-22, D16, D36 | UC-02 | NFR-04
+
+### AC-ADMIN-REVIEW-03 — Từ chối hồ sơ phải có lý do
+- **Cho trước:** Hồ sơ H `PendingReview`.
+- **Khi:** Admin từ chối với (a) không có lý do; (b) lý do chỉ có khoảng trắng; (c) lý do 501 ký tự; (d) lý do "Minh chứng IELTS mờ.".
+- **Thì:** (a), (b), (c) 400 và H vẫn `PendingReview`; (d) 200, H `Rejected` kèm lý do, gia sư nhận `ModerationResult`, sửa và gửi lại được.
+- **Truy vết:** FR-04 | BR-05 | UC-02 | NFR-06
+
+### AC-ADMIN-REVIEW-04 — Không duyệt hồ sơ sai trạng thái
+- **Cho trước:** Hồ sơ H1 `Approved`; hồ sơ H2 `PendingReview`.
+- **Khi:** Admin duyệt H1; hai Admin gửi cùng lúc, một người duyệt H2, người kia từ chối H2.
+- **Thì:** H1: 409, không đổi. H2: đúng một request 200, request kia 409; `audit_logs` chỉ có một dòng cho H2.
+- **Truy vết:** FR-04 | §2.1 business-rules, BR-22 | UC-02 | NFR-03
+
+### AC-ADMIN-REVIEW-05 — Duyệt tin
+- **Cho trước:** Tin T `PendingReview`.
+- **Khi:** Admin mở chi tiết T rồi duyệt lúc 10:00 ngày 23/11/2026 (giờ Việt Nam).
+- **Thì:** Chi tiết có `address`, khối `parent` (họ tên, email, số điện thoại), họ tên và lớp học sinh. Sau khi duyệt: T `Recruiting`, `expiresAtUtc` = 10:00 ngày 23/12/2026 giờ Việt Nam (tính bằng UTC); phụ huynh nhận `ModerationResult`; T xuất hiện trong tìm kiếm của gia sư.
+- **Truy vết:** FR-06 | D33, BR-07, BR-22 | UC-14 | NFR-04
+
+### AC-ADMIN-REVIEW-06 — Từ chối tin
+- **Cho trước:** Tin T `PendingReview` có yêu cầu "Chuyển 200k phí nhận lớp qua Zalo.".
+- **Khi:** Admin từ chối (a) không có lý do; (b) với lý do "Tin yêu cầu phí nhận lớp, vi phạm quy chế.".
+- **Thì:** (a) 400, T vẫn `PendingReview`; (b) 200, T `Rejected` kèm lý do, phụ huynh nhận `ModerationResult`, T không xuất hiện trong tìm kiếm.
+- **Truy vết:** FR-06 | BR-05, BR-06 | UC-14
+
+### AC-ADMIN-REVIEW-07 — Chỉ Admin duyệt, Admin không sửa
+- **Cho trước:** Hồ sơ H và tin T đều `PendingReview`; một Gia sư; một Phụ huynh; một Admin.
+- **Khi:** Gia sư gọi `POST /api/tutor-profiles/{H}/approve` và `GET /api/tutor-profiles?status=PendingReview`; Phụ huynh gọi `POST /api/tutor-requests/{T}/approve`; Admin gọi `PUT /api/tutor-requests/{T}` và `POST /api/tutor-requests/{T}/close`.
+- **Thì:** Cả năm 403; H, T không đổi.
+- **Truy vết:** FR-04, FR-06 | BR-SCOPE-04, BR-SCOPE-05 | UC-02, UC-14 | NFR-02
+
+---
+
+## 7. SEARCH — Tìm tin, điểm phù hợp, lưu tin
+
+### AC-SEARCH-01 — Chỉ tin đang tuyển
+- **Cho trước:** Tin T1 `Recruiting`, T2 `PendingReview`, T3 `Rejected`, T4 `Hired`, T5 `Closed`.
+- **Khi:** Gia sư tìm không lọc; rồi mở chi tiết lần lượt T1 … T5.
+- **Thì:** Kết quả chỉ có T1; chi tiết T1 200 và không có `address`, thông tin phụ huynh, họ tên học sinh; T2 … T5 đều 404 "Không tìm thấy tin.".
+- **Truy vết:** FR-07 | BR-07, BR-SCOPE-02 | UC-03 | NFR-02
+
+### AC-SEARCH-02 — Lọc
+- **Cho trước:** Các tin `Recruiting`: A Toán · `Offline` · TP. Hồ Chí Minh · 150.000–250.000; B Toán · `Online` · 100.000–150.000; C Toán · `Offline` · Hà Nội · 200.000–300.000; D Hóa học · `Both` · TP. Hồ Chí Minh · 200.000–220.000.
+- **Khi:** Tìm với (a) `subjectId` = Toán, `province` = TP. Hồ Chí Minh; (b) như (a) thêm `teachingMode=Offline`; (c) `feeFrom=230000`, `feeTo=260000`; (d) `feeFrom=300000`, `feeTo=200000`.
+- **Thì:** (a) A, B (B là tin chỉ online); (b) chỉ A; (c) A, C; (d) 400.
+- **Truy vết:** FR-07 | D37 | UC-03 | NFR-06
+
+### AC-SEARCH-03 — Tính Matching Score
+- **Cho trước:** Hồ sơ mặc định `Approved` của gia sư và bốn tin như bảng ví dụ ở FR-08.
+- **Khi:** Gia sư tìm với `sort=match`.
+- **Thì:** Bốn tin có điểm lần lượt 100, 50, 40, 25 và theo đúng thứ tự đó; chi tiết tin thứ hai có `matchingBreakdown { subject: 50, area: 0, fee: 0 }`. Tin có phường "  ben thanh" vẫn được 30 điểm khu vực như "Phường Bến Thành".
+- **Truy vết:** FR-08 | D25 | UC-03
+
+### AC-SEARCH-04 — Không có hồ sơ để tính điểm
+- **Cho trước:** Gia sư có hồ sơ mặc định ở `PendingReview` (hồ sơ khác của gia sư thì `Approved`).
+- **Khi:** Tìm với `sort=match`.
+- **Thì:** 200; mọi tin `matchingScore = null`, `scoringProfileId = null`; tin xếp duyệt mới nhất trước.
+- **Truy vết:** FR-08 | D25 | UC-03
+
+### AC-SEARCH-05 — Không có kết quả
+- **Cho trước:** Không có tin `Recruiting` nào môn Tiếng Nhật.
+- **Khi:** Tìm với `subjectId` = Tiếng Nhật.
+- **Thì:** 200, `items` rỗng, `totalCount = 0`.
+- **Truy vết:** FR-07 | BR-07 | UC-03
+
+### AC-SEARCH-06 — Lưu và bỏ lưu tin
+- **Cho trước:** Tin T `Recruiting`, gia sư chưa lưu.
+- **Khi:** Lưu T hai lần; xem danh sách đã lưu; tin T được tuyển (`Hired`); xem lại danh sách; bỏ lưu T hai lần.
+- **Thì:** Hai lần lưu đều 200, danh sách có đúng một dòng T, `isAvailable = true`, kết quả tìm kiếm có `isSaved = true`; sau khi T `Hired` danh sách vẫn có T với `isAvailable = false`; hai lần bỏ lưu đều 200 và danh sách rỗng.
+- **Truy vết:** FR-34 | BR-07 | UC-12
+
+### AC-SEARCH-07 — Không lưu được tin không còn hiển thị
+- **Cho trước:** Tin T `Closed`; tin U không tồn tại.
+- **Khi:** Gia sư lưu T, lưu U.
+- **Thì:** Cả hai 404 "Không tìm thấy tin."; không có dòng nào trong danh sách đã lưu.
+- **Truy vết:** FR-34 | BR-07 | UC-12
+
+### AC-SEARCH-08 — Phân quyền tìm kiếm và tin đã lưu
+- **Cho trước:** Gia sư A đã lưu tin T; gia sư B; một Phụ huynh.
+- **Khi:** Phụ huynh gọi `GET /api/tutor-requests/search` và `PUT /api/saved-tutor-requests/{T}`; B gọi `GET /api/saved-tutor-requests`.
+- **Thì:** Hai request của Phụ huynh 403; danh sách của B rỗng, không có T.
+- **Truy vết:** FR-07, FR-34 | BR-SCOPE-02, BR-SCOPE-05 | UC-03, UC-12 | NFR-02
+
+---
+
+## 8. APPLY — Ứng tuyển và rút phiếu
+
+### AC-APPLY-01 — Ứng tuyển thành công
+- **Cho trước:** Tin T `Recruiting`; gia sư có hồ sơ H `Approved`, chưa xác thực sinh viên, 0 phiếu đang chờ.
+- **Khi:** Ứng tuyển T bằng H với lời giới thiệu 50 ký tự; body có thêm `status: "Hired"`.
+- **Thì:** 201; phiếu ở `Pending` (server bỏ qua `status` client gửi); phụ huynh chủ T nhận `NewApplication`; `GET /api/tutor-applications/mine` có phiếu, `openCount = 1`; tìm kiếm trả T với `hasOpenApplication = true`.
+- **Truy vết:** FR-09 | BR-08, CC-04, D36 | UC-04 | NFR-04
+
+### AC-APPLY-02 — Tối đa 5 phiếu đang chờ
+- **Cho trước:** Gia sư có 3 phiếu `Pending`, 2 phiếu `Viewed`, 4 phiếu `TrialInvited`.
+- **Khi:** Ứng tuyển tin thứ 10; rồi rút một phiếu `Pending` và ứng tuyển lại tin thứ 10.
+- **Thì:** Lần đầu 409 "Bạn đã có 5 phiếu đang chờ xử lý. …", không tạo phiếu; sau khi rút, lần sau 201 (phiếu `TrialInvited` không tính vào hạn mức).
+- **Truy vết:** FR-09, FR-10 | BR-08, D21 | UC-04
+
+### AC-APPLY-03 — Hai request đồng thời không vượt hạn mức
+- **Cho trước:** Gia sư có 4 phiếu `Pending`; hai tin `Recruiting` X, Y.
+- **Khi:** Gửi cùng lúc hai request ứng tuyển X và Y.
+- **Thì:** Đúng một request 201, request kia 409; gia sư có đúng 5 phiếu `Pending`.
+- **Truy vết:** FR-09 | D21 | UC-04 | NFR-03
+
+### AC-APPLY-04 — Không ứng tuyển trùng
+- **Cho trước:** Gia sư có phiếu `TrialInvited` vào tin T; phiếu `Withdrawn` vào tin U (U vẫn `Recruiting`).
+- **Khi:** Ứng tuyển T; ứng tuyển U.
+- **Thì:** T: 409 "Bạn đã ứng tuyển tin này."; U: 201, phiếu mới `Pending`.
+- **Truy vết:** FR-09 | BR-08 | UC-04
+
+### AC-APPLY-05 — Hồ sơ không hợp lệ
+- **Cho trước:** Tin T `Recruiting`; gia sư có hồ sơ H1 `Draft`; hồ sơ H2 `Approved` của gia sư khác.
+- **Khi:** Ứng tuyển T bằng H1; bằng H2.
+- **Thì:** H1: 409 "Chỉ ứng tuyển được bằng hồ sơ đã duyệt."; H2: 404 "Không tìm thấy hồ sơ.". Không tạo phiếu.
+- **Truy vết:** FR-09 | BR-08, BR-SCOPE-02 | UC-04 | NFR-02
+
+### AC-APPLY-06 — Tin không nhận ứng tuyển và lời giới thiệu sai
+- **Cho trước:** Tin T1 `Hired`, T2 `PendingReview`, T3 `Recruiting`; gia sư có hồ sơ `Approved`.
+- **Khi:** Ứng tuyển T1, T2; ứng tuyển T3 với lời giới thiệu 19 ký tự, rồi 1001 ký tự.
+- **Thì:** T1: 409 "Tin không còn nhận ứng tuyển."; T2: 404 "Không tìm thấy tin."; T3: cả hai 400. Không tạo phiếu.
+- **Truy vết:** FR-09 | BR-07 | UC-04 | NFR-06
+
+### AC-APPLY-07 — Rút phiếu
+- **Cho trước:** Phiếu P1 `Pending`, P2 `Viewed` của gia sư.
+- **Khi:** Rút P1, rút P2, rồi rút lại P1.
+- **Thì:** Hai lần đầu 200, phiếu `Withdrawn`, `openCount` giảm 2; `audit_logs` có hai dòng; lần thứ ba 409. Phụ huynh không nhận thông báo.
+- **Truy vết:** FR-10 | BR-09, D21, BR-22 | UC-04
+
+### AC-APPLY-08 — Không rút phiếu đã qua bước mời dạy thử
+- **Cho trước:** Phiếu P3 `TrialInvited`, P4 `Hired`, P5 `Rejected` của gia sư.
+- **Khi:** Rút từng phiếu.
+- **Thì:** Cả ba 409 "Chỉ rút được phiếu đang chờ xử lý hoặc đã xem."; trạng thái không đổi.
+- **Truy vết:** FR-10 | BR-09 | UC-04
+
+### AC-APPLY-09 — Phạm vi phiếu
+- **Cho trước:** Phiếu P của gia sư A; gia sư B; một Phụ huynh có tin `Recruiting`.
+- **Khi:** B xem P và rút P; Phụ huynh gọi `POST /api/tutor-applications`.
+- **Thì:** B nhận 404 "Không tìm thấy phiếu ứng tuyển." cho cả hai, P không đổi; Phụ huynh nhận 403.
+- **Truy vết:** FR-09, FR-10 | BR-SCOPE-02, BR-SCOPE-05 | UC-04 | NFR-02

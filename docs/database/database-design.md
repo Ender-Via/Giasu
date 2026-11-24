@@ -39,6 +39,7 @@ erDiagram
     tutor_profiles ||--o{ tutor_profile_evidences : "profile_id (≤ 5)"
     tutors ||--o{ student_verifications : "tutor_id"
     users ||--o{ student_verifications : "reviewed_by (Admin)"
+    users ||--o{ tutor_profiles : "reviewed_by (Admin)"
 
     roles {
         smallint id PK
@@ -72,6 +73,7 @@ erDiagram
         text status
         text availability
         boolean is_default "một hồ sơ mặc định/gia sư"
+        uuid reviewed_by FK
     }
     tutor_profile_subjects {
         uuid profile_id PK, FK
@@ -98,6 +100,7 @@ erDiagram
     parents ||--o{ tutor_requests : "parent_id"
     students ||--o{ tutor_requests : "student_id"
     subjects ||--o{ tutor_requests : "subject_id"
+    users ||--o{ tutor_requests : "reviewed_by (Admin)"
     tutors ||--o{ saved_tutor_requests : "tutor_id"
     tutor_requests ||--o{ saved_tutor_requests : "request_id"
     tutor_requests ||--o{ tutor_applications : "request_id"
@@ -119,6 +122,7 @@ erDiagram
         smallint subject_id FK
         text status
         timestamptz expires_at
+        uuid reviewed_by FK
     }
     saved_tutor_requests {
         uuid tutor_id PK, FK
@@ -304,7 +308,7 @@ với `id` kế tiếp, không sửa hay xóa môn đã có (FK `RESTRICT` từ 
 
 | Bảng | Cột | Ràng buộc |
 | :-- | :-- | :-- |
-| `tutor_profiles` | `id uuid` PK · `tutor_id uuid` FK `tutors.user_id` · `title text` · `description text` null (giới thiệu, kinh nghiệm) · `education_level text` · `teaching_mode text` · `province text` · `teaching_wards text[]` · `expected_fee_per_session integer` · `status text` (`Draft`) · `availability text` (`Accepting`) · `is_default boolean` · `reject_reason text` null · `submitted_at timestamptz` null · `created_at`, `updated_at timestamptz` | `ix` `tutor_id`; `ux_tutor_profiles_tutor_id_default` unique (`tutor_id`) `WHERE is_default` (BR-02); CHECK: `status`, `availability`, `education_level`, `teaching_mode` thuộc §2 business-rules; `province` thuộc 34 giá trị D37; `title` 10–150 ký tự; `description` ≤ 2000; học phí 50.000–2.000.000, bội số 1.000; `teaching_wards` ≤ 5 phần tử và ≥ 1 khi không phải `Online`; `Rejected` phải có `reject_reason` ≤ 500 (BR-04, BR-05) |
+| `tutor_profiles` | `id uuid` PK · `tutor_id uuid` FK `tutors.user_id` · `title text` · `description text` null (giới thiệu, kinh nghiệm) · `education_level text` · `teaching_mode text` · `province text` · `teaching_wards text[]` · `expected_fee_per_session integer` · `status text` (`Draft`) · `availability text` (`Accepting`) · `is_default boolean` · `reject_reason text` null · `submitted_at timestamptz` null (lần gửi duyệt gần nhất) · `reviewed_by uuid` null FK `users.id` · `reviewed_at timestamptz` null (lần duyệt/từ chối gần nhất) · `created_at`, `updated_at timestamptz` | `ix` `tutor_id`, `reviewed_by`; `ux_tutor_profiles_tutor_id_default` unique (`tutor_id`) `WHERE is_default` (BR-02); CHECK: `status`, `availability`, `education_level`, `teaching_mode` thuộc §2 business-rules; `province` thuộc 34 giá trị D37; `title` 10–150 ký tự; `description` ≤ 2000; học phí 50.000–2.000.000, bội số 1.000; `teaching_wards` ≤ 5 phần tử và ≥ 1 khi không phải `Online`; `Rejected` phải có `reject_reason` ≤ 500; `Approved`/`Rejected` phải có `reviewed_by`, `reviewed_at` (BR-04, BR-05) |
 | `tutor_profile_subjects` | `profile_id uuid` FK · `subject_id smallint` FK | PK (`profile_id`, `subject_id`); `ix` `subject_id` |
 | `tutor_profile_evidences` | `id uuid` PK · `profile_id uuid` FK · `file_ref text` (đường dẫn object trong bucket private) · `file_name text` · `content_type text` · `size_bytes integer` · `created_at timestamptz` | `ix` `profile_id`; `ux` `file_ref`; `content_type` ∈ JPG/PNG/PDF; `size_bytes` 1–5.242.880; `file_name` 1–255 ký tự (BR-03, D16) |
 
@@ -318,11 +322,11 @@ Người làm module tạo migration theo đúng bảng dưới đây; cột nà
 
 | Bảng | Cột chính | Quan hệ | Module |
 | :-- | :-- | :-- | :-- |
-| `students` | `id`, `parent_id`, `full_name`, `grade_level`, `created_at` | N–1 `parents` | REQUEST |
+| `students` | `id`, `parent_id`, `full_name`, `grade_level` (1–12, lớp đang học), `created_at` | N–1 `parents` | REQUEST |
 | `student_verifications` | `id`, `tutor_id`, `university`, `student_code`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at`; unique (`tutor_id`) `WHERE status = 'Pending'` | N–1 `tutors`; `reviewed_by` N–1 `users` | VERIFY |
-| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address`, `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `created_at`, `updated_at` | N–1 `parents`, `students`, `subjects` | REQUEST |
+| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address` (ba cột này `null` khi `Online`), `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `submitted_at`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` | N–1 `parents`, `students`, `subjects`; `reviewed_by` N–1 `users` | REQUEST |
 | `saved_tutor_requests` | `tutor_id`, `request_id` (PK ghép), `saved_at` | N–N | SEARCH |
-| `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles` | APPLY |
+| `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles`; unique (`request_id`, `tutor_id`) `WHERE status IN ('Pending', 'Viewed', 'TrialInvited')` | APPLY |
 | `conversations` | `id`, `application_id` (unique), `created_at` | 1–1 `tutor_applications` | CHAT |
 | `messages` | `id`, `conversation_id`, `sender_id`, `content`, `sent_at` | N–1 `conversations`, `users` | CHAT |
 | `learning_roadmaps` | `id`, `application_id` (unique), `tutor_id`, `parent_id`, `student_id`, `subject_id`, `goal`, `schedule_note`, `fee_per_session`, `start_date`, `end_date`, `status`, `parent_feedback` | 1–1 `tutor_applications` | ROADMAP |
@@ -343,7 +347,11 @@ Người làm module tạo migration theo đúng bảng dưới đây; cột nà
 | `audit_logs` | `id`, `actor_id`, `entity`, `entity_id`, `action`, `from_status`, `to_status`, `created_at`; index (`entity`, `entity_id`) | N–1 `users` | dùng chung (BR-22) |
 
 Ràng buộc nên đặt ở database (CHECK), không chỉ ở validator: các cột `status`, `stars` 1–5,
-`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`, `province` thuộc danh mục D37.
+`score` 0–10, `understanding_level` 1–5, `min_fee <= max_fee`, `amount >= 0`, `province` thuộc danh mục D37,
+`grade_level` 1–12, `sessions_per_week` 1–7.
+
+`submitted_at` là lần gửi duyệt gần nhất (danh sách chờ duyệt của Admin sắp theo cột này);
+`reviewed_by`, `reviewed_at` là lần duyệt/từ chối gần nhất (FR-04, FR-06).
 
 ## 5. Khác với bản phác
 
@@ -351,7 +359,7 @@ Ràng buộc nên đặt ở database (CHECK), không chỉ ở validator: các 
 | :-- | :-- | :-- | :-- |
 | `subjects.education_level` | có | bỏ | Một môn dạy ở nhiều cấp; cấp học đã nằm ở hồ sơ (`tutor_profiles`) và tin (`tutor_requests`). Giữ cột sẽ phải nhân bản "Toán" theo từng cấp và matching D25 không còn so được theo môn. |
 | `tutor_profiles.experience` | có | bỏ | SCR-TUT-02 và BR-04 chỉ có một ô "Giới thiệu, kinh nghiệm" (≤ 2000 ký tự) = `description`. |
-| `tutor_profiles.submitted_at` | không | thêm | Thời điểm gửi duyệt để Admin xếp hàng chờ cũ nhất trước (FR-04 phía Admin). |
+| `tutor_profiles.submitted_at`, `reviewed_by`, `reviewed_at` | không | thêm | Admin xếp hàng chờ theo lần gửi duyệt và xem người, lúc duyệt gần nhất (FR-04 phía Admin, SCR-ADM-02). |
 | `tutor_profile_evidences.created_at`, `file_ref` unique | không | thêm | Sắp xếp minh chứng; một object trong bucket chỉ thuộc một bản ghi. |
 | Mặc định hồ sơ | chỉ quy tắc BR-02 | unique index một phần `WHERE is_default` | DB tự bảo đảm "đúng một hồ sơ mặc định" kể cả khi hai request chạy cùng lúc (AC-PROFILE-03). |
 | `students.created_at`, `tutor_requests.updated_at` | không | thêm | Sắp xếp danh sách; tin `Recruiting` sửa nội dung phải về `PendingReview` (D33). |
