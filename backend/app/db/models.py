@@ -115,6 +115,7 @@ class TutorProfile(Base):
     __tablename__ = "tutor_profiles"
     __table_args__ = (
         Index("ix_tutor_profiles_tutor_id", "tutor_id"),
+        Index("ix_tutor_profiles_reviewed_by", "reviewed_by"),
         Index(
             "ux_tutor_profiles_tutor_id_default",
             "tutor_id",
@@ -142,6 +143,12 @@ class TutorProfile(Base):
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_by: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_tutor_profiles_reviewed_by", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

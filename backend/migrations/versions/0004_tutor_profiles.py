@@ -52,6 +52,10 @@ PROFILE_CHECKS = {
         "(reject_reason IS NULL OR char_length(reject_reason) <= 500) "
         "AND (status <> 'Rejected' OR reject_reason IS NOT NULL)"
     ),
+    "ck_tutor_profiles_reviewed": (
+        "status NOT IN ('Approved', 'Rejected') "
+        "OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)"
+    ),
 }
 
 
@@ -77,15 +81,21 @@ def upgrade() -> None:
         sa.Column("is_default", sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.Column("reject_reason", sa.Text(), nullable=True),
         sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("reviewed_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("reviewed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["tutor_id"], ["tutors.user_id"], name="fk_tutor_profiles_tutor_id", ondelete="RESTRICT"
         ),
+        sa.ForeignKeyConstraint(
+            ["reviewed_by"], ["users.id"], name="fk_tutor_profiles_reviewed_by", ondelete="RESTRICT"
+        ),
         sa.PrimaryKeyConstraint("id", name="pk_tutor_profiles"),
         *(sa.CheckConstraint(sql, name=name) for name, sql in PROFILE_CHECKS.items()),
     )
     op.create_index("ix_tutor_profiles_tutor_id", "tutor_profiles", ["tutor_id"])
+    op.create_index("ix_tutor_profiles_reviewed_by", "tutor_profiles", ["reviewed_by"])
     op.create_index(
         "ux_tutor_profiles_tutor_id_default",
         "tutor_profiles",
@@ -155,5 +165,6 @@ def downgrade() -> None:
     op.drop_table("tutor_profile_evidences")
     op.drop_table("tutor_profile_subjects")
     op.drop_index("ux_tutor_profiles_tutor_id_default", table_name="tutor_profiles")
+    op.drop_index("ix_tutor_profiles_reviewed_by", table_name="tutor_profiles")
     op.drop_index("ix_tutor_profiles_tutor_id", table_name="tutor_profiles")
     op.drop_table("tutor_profiles")

@@ -12,7 +12,7 @@ Danh sách những gì đã được kiểm chứng trong nhánh chuyển FastAP
 | Hạ tầng chung | — | `ApiResponse<T>`, lỗi HTTP theo cùng khuôn, CORS, header `nosniff`/`DENY`, OpenAPI `/docs` | pytest/lint |
 | Phân quyền theo vai trò | dependency `require_roles(...)` | Sai vai trò 403 "Bạn không có quyền thực hiện hành động này." trước khi xét bản ghi; vai trò đọc từ `users.role_id` | pytest |
 | Lỗi validate | handler `RequestValidationError` | 400 giữ đúng câu tiếng Việt của validator trong `errors`; lỗi kiểu/JSON hỏng dùng câu chung | pytest |
-| Schema | `tutors`, `parents`, `subjects` (seed 22 môn), `tutor_profiles`, `tutor_profile_subjects`, `tutor_profile_evidences` | Migration `0003`, `0004` nâng từ `0002` và hạ về được; CHECK chặn tỉnh ngoài D37, học phí lẻ, `Rejected` thiếu lý do | PostgreSQL 16 local |
+| Schema | `tutors`, `parents`, `subjects` (seed 22 môn), `tutor_profiles`, `tutor_profile_subjects`, `tutor_profile_evidences` | Migration `0003`, `0004` nâng từ `0002` và hạ về được; `tutor_profiles` có `submitted_at`, `reviewed_by`, `reviewed_at`; CHECK chặn tỉnh ngoài D37, học phí lẻ, `Rejected` thiếu lý do, đã duyệt/từ chối thiếu người duyệt | pytest trên DB đã migrate (CI) |
 | Danh mục môn | `GET /api/subjects` | Mọi vai trò; thứ tự theo `id` | S01-07 · pytest |
 | Hồ sơ gia sư | `GET /api/tutor-profiles/mine` · `GET /api/tutor-profiles/{id}` · `POST /api/tutor-profiles` → 201 · `PUT /api/tutor-profiles/{id}` · `POST .../{id}/set-default` · `PUT .../{id}/availability` · `POST .../{id}/submit` | AC-PROFILE-01 … 09 (trừ phần thông báo Admin); chỉ Gia sư; hồ sơ người khác 404; đồng thời đặt mặc định/tạo hồ sơ/gửi duyệt đã thử trên PostgreSQL | S02-05 · pytest SQLite + PostgreSQL |
 | Minh chứng hồ sơ | `POST /api/tutor-profiles/{id}/evidences` (multipart `files`, 1–5 tệp) → 201 · `DELETE .../{id}/evidences/{evidenceId}` | Kiểm magic bytes + đuôi, ≤ 5 MB/tệp (400); quá 5 tệp/hồ sơ, kể cả dồn trong một lượt (409); không giữ khóa DB trong lúc gọi Storage, kiểm lại trạng thái sau khi tải, lỗi thì không lưu bản ghi và dọn tệp; chi tiết hồ sơ trả URL ký 60 phút; body > 26 MB bị chặn 413 kể cả chunked | S02-05 · pytest (Storage giả) |
@@ -25,6 +25,11 @@ Chưa triển khai trong PR nền này:
 - Không còn `POST /api/auth/login` hay `/logout` ở backend; Supabase Auth đảm nhiệm hai thao tác.
 - Chưa chạy/stamp migration trên DB Supabase dùng chung và chưa xác minh token với project thật vì
   môi trường làm việc không có cấu hình Supabase.
+- Chưa có code nào ghi `tutors`/`parents`. Cho tới khi đăng ký (FR-01, S01-04) tạo dòng `tutors`
+  cùng `phone`, `POST /api/tutor-profiles` trả 404 "Không tìm thấy tài khoản gia sư." và
+  `GET /api/tutor-profiles/mine` trả danh sách rỗng với mọi gia sư thật.
+- `GET /api/tutor-profiles/{id}` hiện chỉ cho Gia sư xem hồ sơ của mình. Nhánh Admin (xem mọi hồ
+  sơ, kèm khối `tutor`) cùng danh sách, duyệt, từ chối thuộc FR-04 phần Admin (S03-01).
 - Hồ sơ gia sư chưa gửi thông báo cho Admin khi gửi duyệt (AC-PROFILE-07, phần thông báo): chờ
   dịch vụ thông báo của module NOTI.
 - `SupabaseFileStorage` chưa thử với bucket thật: cần tạo bucket private (mặc định `evidences`)
