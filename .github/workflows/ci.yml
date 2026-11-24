@@ -59,6 +59,11 @@ jobs:
           PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -At -v ON_ERROR_STOP=1 \
             -c "SELECT 1 FROM users u JOIN tutors t ON t.user_id=u.id WHERE u.auth_user_id='22222222-2222-2222-2222-222222222222' AND u.login_identifier='new.tutor@example.com' AND u.role_id=2 AND t.verification_status='Unverified';" \
             | grep -qx 1
+          PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -v ON_ERROR_STOP=1 \
+            -c "INSERT INTO auth.users (id, email) VALUES ('33333333-3333-3333-3333-333333333333', 'dashboard.admin@example.com');"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -At -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) FROM users WHERE auth_user_id='33333333-3333-3333-3333-333333333333';" \
+            | grep -qx 0
       - name: Kiểm tra CHECK sau migration
         env:
           MIGRATED_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/giasu_test

@@ -39,7 +39,11 @@ def upgrade() -> None:
             registration_phone text := NEW.raw_user_meta_data ->> 'phone';
             role_id smallint;
         BEGIN
-            IF NEW.raw_user_meta_data ->> 'registration_source' <> 'giasu-register' THEN
+            IF NEW.raw_user_meta_data IS NULL
+               OR (
+                   NEW.raw_user_meta_data ->> 'registration_source'
+               ) IS DISTINCT FROM 'giasu-register'
+            THEN
                 RETURN NEW;
             END IF;
 
@@ -89,4 +93,6 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS on_giasu_auth_user_created ON auth.users")
     op.execute("DROP FUNCTION IF EXISTS public.handle_giasu_registration()")
+    op.execute("ALTER TABLE public.parents DISABLE ROW LEVEL SECURITY")
+    op.execute("ALTER TABLE public.tutors DISABLE ROW LEVEL SECURITY")
     op.drop_index("ix_users_login_identifier_lower", table_name="users")

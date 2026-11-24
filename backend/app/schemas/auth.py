@@ -18,6 +18,13 @@ class RegisterRequest(BaseModel):
     password: SecretStr
     acceptTerms: bool
 
+    @field_validator("role", mode="plain")
+    @classmethod
+    def validate_role(cls, value: object) -> str:
+        if value not in ("Tutor", "Parent"):
+            raise ValueError("Vui lòng chọn vai trò Gia sư hoặc Phụ huynh.")
+        return str(value)
+
     @field_validator("fullName")
     @classmethod
     def validate_full_name(cls, value: str) -> str:

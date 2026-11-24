@@ -78,6 +78,9 @@ class SupabaseAuthClient:
             raise SupabaseUnavailableError("Không thể kết nối Supabase Auth.") from exc
 
         user = payload.get("user") or payload
+        identities = user.get("identities")
+        if isinstance(identities, list) and len(identities) == 0:
+            raise SupabaseDuplicateEmailError("Email đã được sử dụng.")
         try:
             return SupabaseSignUpResult(auth_user_id=UUID(user["id"]))
         except (KeyError, TypeError, ValueError) as exc:

@@ -11,6 +11,7 @@ from app.core.supabase_auth import (
     SupabaseDuplicateEmailError,
     SupabaseRateLimitError,
     SupabaseSignUpResult,
+    SupabaseUnavailableError,
     get_supabase_auth_client,
 )
 from app.db.models import Parent, Tutor, User
@@ -94,8 +95,12 @@ async def test_register_creates_business_user_and_exactly_one_role_profile(
     assert user is not None
     assert user.credential_reference is None
     assert user.is_active is True
-    assert db_session.get(Tutor, user.id) is not None if role == "Tutor" else True
-    assert db_session.get(Parent, user.id) is not None if role == "Parent" else True
+    if role == "Tutor":
+        assert db_session.get(Tutor, user.id) is not None
+        assert db_session.get(Parent, user.id) is None
+    else:
+        assert db_session.get(Parent, user.id) is not None
+        assert db_session.get(Tutor, user.id) is None
     tutor_count = db_session.scalar(select(func.count()).select_from(Tutor))
     parent_count = db_session.scalar(select(func.count()).select_from(Parent))
     assert tutor_count == (1 if role == "Tutor" else 0)
@@ -112,6 +117,7 @@ async def test_register_creates_business_user_and_exactly_one_role_profile(
         ({"acceptTerms": False}, "Bạn cần đồng ý quy chế để tiếp tục."),
         ({"role": "Admin"}, "Vui lòng chọn vai trò Gia sư hoặc Phụ huynh."),
         ({"fullName": "A"}, "Họ tên từ 2 đến 100 ký tự."),
+        ({"email": "not-an-email"}, "Email không đúng định dạng."),
     ],
 )
 async def test_register_rejects_each_invalid_field_without_creating_account(
@@ -189,4 +195,33 @@ async def test_register_maps_supabase_rate_limit_to_429_without_profile(
     assert response.status_code == 429
     assert "60 giây" in response.json()["message"]
     assert db_session.scalar(select(func.count()).select_from(User)) == 0
+
+
+async def test_register_maps_supabase_unavailable_to_503(
+    client: AsyncClient, db_session: Session
+) -> None:
+    fake = FakeSupabaseAuthClient(db_session, SupabaseUnavailableError("Service down"))
+    app.dependency_overrides[get_supabase_auth_client] = lambda: fake
+
+    response = await client.post("/api/auth/register", json=registration_payload())
+
+    assert response.status_code == 503
+    assert "Chưa thể tạo tài khoản" in response.json()["message"]
+    assert db_session.scalar(select(func.count()).select_from(User)) == 0
+
+
+async def test_register_forwards_client_ip_from_x_forwarded_for(
+    client: AsyncClient, db_session: Session
+) -> None:
+    fake = FakeSupabaseAuthClient(db_session)
+    app.dependency_overrides[get_supabase_auth_client] = lambda: fake
+
+    response = await client.post(
+        "/api/auth/register",
+        json=registration_payload(),
+        headers={"X-Forwarded-For": "203.0.113.195, 10.0.0.1"},
+    )
+
+    assert response.status_code == 201
+    assert fake.calls[0]["client_ip"] == "203.0.113.195"
 

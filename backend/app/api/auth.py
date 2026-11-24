@@ -19,6 +19,13 @@ from app.services.auth import (
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
+def _get_client_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else None
+
+
 @router.post(
     "/register",
     response_model=ApiResponse[CurrentUserResponse],
@@ -32,7 +39,7 @@ def register(
 ) -> ApiResponse[CurrentUserResponse]:
     service = AuthService(AuthRepository(db))
     try:
-        user = service.register(payload, supabase, request.client.host if request.client else None)
+        user = service.register(payload, supabase, _get_client_ip(request))
     except DuplicateEmailError as exc:
         raise HTTPException(status_code=409, detail="Email đã được sử dụng.") from exc
     except RegistrationRateLimitError as exc:
