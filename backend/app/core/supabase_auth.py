@@ -33,7 +33,8 @@ class SupabaseAuthClient:
 
     def __init__(self, settings: Settings) -> None:
         self._url = f"{settings.supabase_url.rstrip('/')}/auth/v1/signup"
-        self._secret_key = settings.supabase_secret_key
+        secret = settings.supabase_secret_key
+        self._secret_key = secret.get_secret_value() if secret is not None else ""
 
     def sign_up(
         self,
@@ -93,7 +94,7 @@ class SupabaseAuthClient:
         except (UnicodeDecodeError, json.JSONDecodeError):
             payload = {}
 
-        code = str(payload.get("code", "")).lower()
+        code = str(payload.get("error_code") or payload.get("code") or "").lower()
         message = str(
             payload.get("msg") or payload.get("message") or payload.get("error_description") or ""
         ).lower()

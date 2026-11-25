@@ -37,7 +37,7 @@ class RegisterRequest(BaseModel):
     @classmethod
     def validate_phone(cls, value: str) -> str:
         normalized = value.strip()
-        if re.fullmatch(r"0\d{9}", normalized) is None:
+        if re.fullmatch(r"0[0-9]{9}", normalized) is None:
             raise ValueError("Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.")
         return normalized
 

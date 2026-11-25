@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
+from app.core.config import get_settings
 from app.core.supabase_auth import SupabaseAuthClient, get_supabase_auth_client
 from app.db.session import get_db
 from app.repositories.auth import AuthRepository
@@ -20,10 +21,12 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
 def _get_client_ip(request: Request) -> str | None:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else None
+    client_host = request.client.host if request.client else None
+    if client_host and client_host in get_settings().trusted_proxies:
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return client_host
 
 
 @router.post(

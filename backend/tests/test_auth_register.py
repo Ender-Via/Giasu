@@ -1,13 +1,19 @@
+import io
+import json
 from datetime import datetime, timezone
 from decimal import Decimal
+from urllib.error import HTTPError
 from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
+from pydantic import SecretStr
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings
 from app.core.supabase_auth import (
+    SupabaseAuthClient,
     SupabaseDuplicateEmailError,
     SupabaseRateLimitError,
     SupabaseSignUpResult,
@@ -210,7 +216,7 @@ async def test_register_maps_supabase_unavailable_to_503(
     assert db_session.scalar(select(func.count()).select_from(User)) == 0
 
 
-async def test_register_forwards_client_ip_from_x_forwarded_for(
+async def test_register_ignores_x_forwarded_for_from_untrusted_client(
     client: AsyncClient, db_session: Session
 ) -> None:
     fake = FakeSupabaseAuthClient(db_session)
@@ -223,5 +229,148 @@ async def test_register_forwards_client_ip_from_x_forwarded_for(
     )
 
     assert response.status_code == 201
+    assert fake.calls[0]["client_ip"] == "127.0.0.1"
+
+
+async def test_register_forwards_x_forwarded_for_from_trusted_proxy(
+    client: AsyncClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake = FakeSupabaseAuthClient(db_session)
+    app.dependency_overrides[get_supabase_auth_client] = lambda: fake
+    monkeypatch.setattr(
+        "app.api.auth.get_settings",
+        lambda: Settings(trusted_proxies=["127.0.0.1"]),
+    )
+
+    response = await client.post(
+        "/api/auth/register",
+        json=registration_payload(),
+        headers={"X-Forwarded-For": "203.0.113.195, 10.0.0.1"},
+    )
+
+    assert response.status_code == 201
     assert fake.calls[0]["client_ip"] == "203.0.113.195"
+
+
+def test_supabase_auth_client_unwraps_secret_str_and_sends_string_apikey(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auth_user_id = uuid4()
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {"user": {"id": str(auth_user_id), "identities": [{"id": "1"}]}}
+            ).encode("utf-8")
+
+    def fake_urlopen(request: object, timeout: int = 10) -> FakeResponse:
+        captured["request"] = request
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("app.core.supabase_auth.urlopen", fake_urlopen)
+    client_auth = SupabaseAuthClient(
+        Settings(
+            supabase_url="https://example.supabase.co",
+            supabase_secret_key=SecretStr("sb_secret_test_value"),
+        )
+    )
+
+    result = client_auth.sign_up(
+        email="tutor@example.com",
+        password="MatKhau123",
+        full_name="Nguyễn Văn Lộc",
+        phone="0912345678",
+        role="Tutor",
+        client_ip="1.2.3.4",
+    )
+
+    assert result.auth_user_id == auth_user_id
+    req = captured["request"]
+    assert req.get_header("Apikey") == "sb_secret_test_value"  # type: ignore[attr-defined]
+    assert isinstance(req.get_header("Apikey"), str)  # type: ignore[attr-defined]
+    assert req.get_header("Sb-forwarded-for") == "1.2.3.4"  # type: ignore[attr-defined]
+
+
+def test_supabase_auth_client_missing_secret_raises_unavailable() -> None:
+    client_auth = SupabaseAuthClient(Settings(supabase_secret_key=None))
+    with pytest.raises(SupabaseUnavailableError):
+        client_auth.sign_up(
+            email="tutor@example.com",
+            password="MatKhau123",
+            full_name="Nguyễn Văn Lộc",
+            phone="0912345678",
+            role="Tutor",
+            client_ip=None,
+        )
+
+
+def test_supabase_auth_client_empty_identities_raises_duplicate_email(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps({"user": {"id": str(uuid4()), "identities": []}}).encode("utf-8")
+
+    monkeypatch.setattr("app.core.supabase_auth.urlopen", lambda req, timeout=10: FakeResponse())
+    client_auth = SupabaseAuthClient(Settings(supabase_secret_key=SecretStr("sb_secret_test")))
+
+    with pytest.raises(SupabaseDuplicateEmailError):
+        client_auth.sign_up(
+            email="tutor@example.com",
+            password="MatKhau123",
+            full_name="Nguyễn Văn Lộc",
+            phone="0912345678",
+            role="Tutor",
+            client_ip=None,
+        )
+
+
+@pytest.mark.parametrize(
+    ("status_code", "body", "expected_exc"),
+    [
+        (422, {"code": 422, "error_code": "email_exists"}, SupabaseDuplicateEmailError),
+        (429, {"code": 429, "msg": "Too many requests"}, SupabaseRateLimitError),
+    ],
+)
+def test_supabase_auth_client_maps_gotrue_v2_http_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    status_code: int,
+    body: dict[str, object],
+    expected_exc: type[Exception],
+) -> None:
+    def fake_urlopen(request: object, timeout: int = 10) -> object:
+        raise HTTPError(
+            url="https://example.supabase.co/auth/v1/signup",
+            code=status_code,
+            msg="Error",
+            hdrs=None,  # type: ignore[arg-type]
+            fp=io.BytesIO(json.dumps(body).encode("utf-8")),
+        )
+
+    monkeypatch.setattr("app.core.supabase_auth.urlopen", fake_urlopen)
+    client_auth = SupabaseAuthClient(Settings(supabase_secret_key=SecretStr("sb_secret_test")))
+
+    with pytest.raises(expected_exc):
+        client_auth.sign_up(
+            email="tutor@example.com",
+            password="MatKhau123",
+            full_name="Nguyễn Văn Lộc",
+            phone="0912345678",
+            role="Tutor",
+            client_ip=None,
+        )
 

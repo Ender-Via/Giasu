@@ -22,8 +22,6 @@ def upgrade() -> None:
         [sa.text("lower(login_identifier)")],
         unique=True,
     )
-    op.execute("ALTER TABLE public.tutors ENABLE ROW LEVEL SECURITY")
-    op.execute("ALTER TABLE public.parents ENABLE ROW LEVEL SECURITY")
     op.execute(
         """
         CREATE FUNCTION public.handle_giasu_registration()
@@ -93,6 +91,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS on_giasu_auth_user_created ON auth.users")
     op.execute("DROP FUNCTION IF EXISTS public.handle_giasu_registration()")
-    op.execute("ALTER TABLE public.parents DISABLE ROW LEVEL SECURITY")
-    op.execute("ALTER TABLE public.tutors DISABLE ROW LEVEL SECURITY")
     op.drop_index("ix_users_login_identifier_lower", table_name="users")
