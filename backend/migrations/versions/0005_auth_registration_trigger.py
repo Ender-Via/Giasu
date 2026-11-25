@@ -45,7 +45,8 @@ def upgrade() -> None:
                 RETURN NEW;
             END IF;
 
-            IF registration_role NOT IN ('Tutor', 'Parent')
+            IF registration_role IS NULL
+               OR registration_role NOT IN ('Tutor', 'Parent')
                OR registration_name IS NULL
                OR char_length(registration_name) NOT BETWEEN 2 AND 100
                OR registration_phone IS NULL
@@ -68,10 +69,10 @@ def upgrade() -> None:
             IF registration_role = 'Tutor' THEN
                 INSERT INTO public.tutors (
                     user_id, phone, verification_status, reputation_score
-                ) VALUES (business_user_id, registration_phone, 'Unverified', 0);
+                ) VALUES (business_user_id, registration_phone, 'Unverified', NULL);
             ELSE
                 INSERT INTO public.parents (user_id, phone, reputation_score)
-                VALUES (business_user_id, registration_phone, 0);
+                VALUES (business_user_id, registration_phone, NULL);
             END IF;
             RETURN NEW;
         END;

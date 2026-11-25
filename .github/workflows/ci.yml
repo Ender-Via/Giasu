@@ -64,6 +64,11 @@ jobs:
           PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -At -v ON_ERROR_STOP=1 \
             -c "SELECT count(*) FROM users WHERE auth_user_id='33333333-3333-3333-3333-333333333333';" \
             | grep -qx 0
+          ! PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -v ON_ERROR_STOP=1 \
+            -c "INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ('44444444-4444-4444-4444-444444444444', 'missing.role@example.com', '{\"registration_source\":\"giasu-register\",\"full_name\":\"Missing Role\",\"phone\":\"0912345678\",\"accept_terms\":true}');"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d giasu_test -At -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) FROM users WHERE auth_user_id='44444444-4444-4444-4444-444444444444';" \
+            | grep -qx 0
       - name: Kiểm tra CHECK sau migration
         env:
           MIGRATED_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/giasu_test

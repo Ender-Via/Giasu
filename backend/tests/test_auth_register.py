@@ -1,7 +1,6 @@
 import io
 import json
 from datetime import datetime, timezone
-from decimal import Decimal
 from urllib.error import HTTPError
 from uuid import uuid4
 
@@ -58,7 +57,7 @@ class FakeSupabaseAuthClient:
                     user_id=business_user_id,
                     phone=str(kwargs["phone"]),
                     verification_status="Unverified",
-                    reputation_score=Decimal("0"),
+                    reputation_score=None,
                 )
             )
         else:
@@ -66,7 +65,7 @@ class FakeSupabaseAuthClient:
                 Parent(
                     user_id=business_user_id,
                     phone=str(kwargs["phone"]),
-                    reputation_score=Decimal("0"),
+                    reputation_score=None,
                 )
             )
         self.db.commit()
@@ -102,10 +101,14 @@ async def test_register_creates_business_user_and_exactly_one_role_profile(
     assert user.credential_reference is None
     assert user.is_active is True
     if role == "Tutor":
-        assert db_session.get(Tutor, user.id) is not None
+        tutor = db_session.get(Tutor, user.id)
+        assert tutor is not None
+        assert tutor.reputation_score is None
         assert db_session.get(Parent, user.id) is None
     else:
-        assert db_session.get(Parent, user.id) is not None
+        parent = db_session.get(Parent, user.id)
+        assert parent is not None
+        assert parent.reputation_score is None
         assert db_session.get(Tutor, user.id) is None
     tutor_count = db_session.scalar(select(func.count()).select_from(Tutor))
     parent_count = db_session.scalar(select(func.count()).select_from(Parent))
@@ -122,8 +125,11 @@ async def test_register_creates_business_user_and_exactly_one_role_profile(
         ({"phone": "123"}, "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0."),
         ({"acceptTerms": False}, "Bạn cần đồng ý quy chế để tiếp tục."),
         ({"role": "Admin"}, "Vui lòng chọn vai trò Gia sư hoặc Phụ huynh."),
+        ({"role": None}, "Vui lòng chọn vai trò Gia sư hoặc Phụ huynh."),
         ({"fullName": "A"}, "Họ tên từ 2 đến 100 ký tự."),
+        ({"fullName": None}, "Họ tên từ 2 đến 100 ký tự."),
         ({"email": "not-an-email"}, "Email không đúng định dạng."),
+        ({"email": None}, "Email không đúng định dạng."),
     ],
 )
 async def test_register_rejects_each_invalid_field_without_creating_account(
