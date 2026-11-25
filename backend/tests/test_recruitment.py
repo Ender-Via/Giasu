@@ -158,6 +158,7 @@ async def test_ac_request_04_dang_tin_ghi_nhat_ky_va_bao_admin(
     item = await create_request(client, parent, request_body)
     assert item["status"] == "PendingReview"
     assert item["expiresAtUtc"] is None
+    assert item["title"] is None
     assert item["requirements"] == "Dạy tối thứ 3 và thứ 6."
     assert (await client.get(f"{REQUESTS}/{item['id']}", headers=tutor)).status_code == 404
 
@@ -182,6 +183,8 @@ async def test_ac_request_04_dang_tin_ghi_nhat_ky_va_bao_admin(
         ({"subjectId": 323}, "môn"),
         ({"requirements": "a" * 2001}, "Yêu cầu"),
         ({"address": "a" * 201}, "Địa chỉ"),
+        ({"title": "a" * 151}, "Tiêu đề"),
+        ({"title": 123}, "Tiêu đề"),
     ],
 )
 async def test_ac_request_05_tin_sai_truong(client, parent, request_body, change, field):
@@ -198,6 +201,25 @@ async def test_ac_request_06_online_bo_qua_khu_vuc(client, parent, request_body)
     for body in (no_area, {**request_body, "province": 15, "address": {"ignored": True}}):
         created = await create_request(client, parent, body)
         assert [created[key] for key in ("province", "ward", "address")] == [None, None, None]
+
+
+async def test_tieu_de_tin_tuy_chon_va_tuong_thich_client_cu(client, parent, request_body):
+    title = "Tìm gia sư Toán lớp 11"
+    item = await create_request(client, parent, {**request_body, "title": f" {title} "})
+    assert item["title"] == title
+    detail_path = f"{REQUESTS}/{item['id']}"
+
+    response = await client.put(detail_path, headers=parent[1], json=request_body)
+    assert response.status_code == 200
+    assert response.json()["data"]["title"] == title
+    listing = await client.get(f"{REQUESTS}/mine", headers=parent[1])
+    assert listing.json()["data"]["items"][0]["title"] == title
+
+    response = await client.put(
+        detail_path, headers=parent[1], json={**request_body, "title": None}
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["title"] is None
 
 
 def set_request_status(db_session, item, status):

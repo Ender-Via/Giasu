@@ -6,6 +6,7 @@ from sqlalchemy import (
     ARRAY,
     JSON,
     Boolean,
+    Computed,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -111,10 +112,16 @@ class Student(Base):
 
 class Subject(Base):
     __tablename__ = "subjects"
-    __table_args__ = (Index("ix_subjects_name", "name", unique=True),)
+    __table_args__ = (
+        Index("ix_subjects_name", "name", unique=True),
+        Index("ix_subjects_code", "code", unique=True),
+    )
 
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True, autoincrement=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    code: Mapped[str] = mapped_column(
+        Text, Computed("'SUB-' || CAST(id AS VARCHAR(6))", persisted=True)
+    )
 
 
 class TutorRequest(Base):
@@ -140,6 +147,7 @@ class TutorRequest(Base):
     subject_id: Mapped[int] = mapped_column(
         ForeignKey("subjects.id", name="fk_tutor_requests_subject_id", ondelete="RESTRICT")
     )
+    title: Mapped[str | None] = mapped_column(Text)
     education_level: Mapped[str] = mapped_column(Text)
     teaching_mode: Mapped[str] = mapped_column(Text)
     province: Mapped[str | None] = mapped_column(Text)

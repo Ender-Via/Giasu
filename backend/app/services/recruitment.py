@@ -39,6 +39,7 @@ def student_response(student: Student) -> StudentResponse:
 def request_response(request: TutorRequest, open_count: int) -> TutorRequestResponse:
     return TutorRequestResponse(
         id=request.id,
+        title=request.title,
         studentId=request.student_id,
         studentName=request.student.full_name,
         studentGradeLevel=request.student.grade_level,
@@ -71,6 +72,8 @@ def apply_request_content(
     request.student = student
     request.subject_id = subject.id
     request.subject = subject
+    if "title" in body.model_fields_set:
+        request.title = body.title
     request.education_level = body.educationLevel
     request.teaching_mode = body.teachingMode
     request.province = body.province
@@ -151,6 +154,7 @@ class RecruitmentService:
         if current_user.role == ROLE_TUTOR:
             return TutorRequestPublicResponse(
                 id=request.id,
+                title=request.title,
                 subjectName=request.subject.name,
                 studentGradeLevel=request.student.grade_level,
                 educationLevel=request.education_level,

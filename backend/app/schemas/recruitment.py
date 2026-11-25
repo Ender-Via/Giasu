@@ -23,6 +23,7 @@ FIELD_MESSAGES = {
     "gradeLevel": "Lớp phải là số nguyên từ 1 đến 12.",
     "studentId": "Vui lòng chọn học sinh hợp lệ.",
     "subjectId": "Vui lòng chọn môn học trong danh mục.",
+    "title": "Tiêu đề tin phải là văn bản tối đa 150 ký tự.",
     "sessionsPerWeek": "Số buổi mỗi tuần phải là số nguyên từ 1 đến 7.",
     "minFee": "Học phí tối thiểu phải là số nguyên từ 50.000 đến 2.000.000 đồng.",
     "maxFee": "Học phí tối đa phải là số nguyên từ 50.000 đến 2.000.000 đồng.",
@@ -62,6 +63,7 @@ Fee = Annotated[StrictInt, Field(ge=50_000, le=2_000_000)]
 class TutorRequestUpsertRequest(RecruitmentInput):
     studentId: UUID
     subjectId: Annotated[StrictInt, Field(ge=1, le=32_767)]
+    title: Annotated[str, Field(max_length=150)] | None = None
     educationLevel: str
     teachingMode: str
     province: str | None = Field(default=None, validate_default=True)
@@ -71,6 +73,15 @@ class TutorRequestUpsertRequest(RecruitmentInput):
     minFee: Fee
     maxFee: Fee
     requirements: Annotated[str, BeforeValidator(clean_text), Field(min_length=1, max_length=2000)]
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def check_title(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str) or "\x00" in value:
+            raise ValueError(FIELD_MESSAGES["title"])
+        return clean_text(value)
 
     @field_validator("educationLevel", mode="before")
     @classmethod
@@ -136,6 +147,7 @@ class StudentResponse(BaseModel):
 
 class TutorRequestPublicResponse(BaseModel):
     id: UUID
+    title: str | None
     subjectName: str
     studentGradeLevel: int
     educationLevel: str
@@ -152,6 +164,7 @@ class TutorRequestPublicResponse(BaseModel):
 
 class TutorRequestResponse(BaseModel):
     id: UUID
+    title: str | None
     studentId: UUID
     studentName: str
     studentGradeLevel: int
