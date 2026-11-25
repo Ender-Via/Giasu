@@ -108,9 +108,9 @@ bảng này.
 | SCR-TUT-01 nút "Gửi duyệt" | Hồ sơ đủ điều kiện BR-04, có ≥ 1 minh chứng (SCR-TUT-02) | Nút khóa, kèm dòng "Cần bổ sung: ..." liệt kê điều còn thiếu |
 | SCR-ADM-02 danh sách chờ duyệt | Gia sư gửi duyệt hồ sơ (SCR-TUT-01) | Rỗng: "Chưa có hồ sơ nào chờ duyệt." |
 | SCR-ADM-03 danh sách chờ xác thực | Gia sư gửi xác thực (SCR-TUT-03) | Rỗng: "Chưa có yêu cầu xác thực nào." |
-| SCR-PAR-03 đăng tin | Phụ huynh có ít nhất một học sinh (SCR-PAR-01) | Ô chọn học sinh rỗng, kèm liên kết "Thêm học sinh" |
+| SCR-PAR-03 đăng tin | Phụ huynh có ít nhất một học sinh (SCR-PAR-01) | Thay form bằng "Bạn cần thêm học sinh trước khi đăng tin.", nút sang SCR-PAR-01 |
 | SCR-TUT-04 có tin để tìm | Admin duyệt tin (SCR-ADM-04) | Rỗng theo SCR-TUT-04 |
-| SCR-TUT-04 Matching Score | Gia sư có hồ sơ `Approved` | Không có cột điểm phù hợp, kèm dòng nhắc hoàn thiện hồ sơ |
+| SCR-TUT-04 Matching Score | Hồ sơ **mặc định** của gia sư ở `Approved` (FR-08) | Không có cột điểm phù hợp, kèm dòng nhắc hoàn thiện hồ sơ |
 
 ---
 
@@ -129,18 +129,18 @@ bảng này.
 | SCR-TUT-07 | Lộ trình và buổi học | `/tutor/roadmaps` | FR-15–FR-18 | S07 | SV2 | chưa viết (S05) | UI-08 |
 | SCR-TUT-08 | Chi tiết lộ trình | `/tutor/roadmaps/[id]` | FR-15–FR-23 | S07–S09 | SV2 | chưa viết (S05) | UI-08, UI-09, UI-10 |
 | SCR-TUT-09 | Học phí | `/tutor/tuition` | FR-24, FR-26 | S10 | SV2 | chưa viết (S07) | UI-11 |
-| SCR-PAR-01 | Học sinh của tôi | `/parent/students` | FR-05 | S04 | SV4 | chưa viết (S02) | UI-05 |
-| SCR-PAR-02 | Tin tìm gia sư | `/parent/jobs` | FR-05, FR-35 | S04 | SV4 | chưa viết (S02) | UI-05 |
-| SCR-PAR-03 | Đăng / sửa tin | `/parent/jobs/new`, `/parent/jobs/[id]/edit` | FR-05 | S04 | SV4 | chưa viết (S02) | UI-05 |
+| SCR-PAR-01 | Học sinh của tôi | `/parent/students` | FR-05 | S04 | SV4 | **đã viết** | UI-05 |
+| SCR-PAR-02 | Tin tìm gia sư | `/parent/jobs` | FR-05, FR-35 | S04 | SV4 | **đã viết** (vùng gia hạn FR-35: S03) | UI-05 |
+| SCR-PAR-03 | Đăng / sửa tin | `/parent/jobs/new`, `/parent/jobs/[id]/edit` | FR-05 | S04 | SV4 | **đã viết** | UI-05 |
 | SCR-PAR-04 | Ứng viên của tin | `/parent/jobs/[id]` | FR-11–FR-13 | S06 | SV4 | chưa viết (S04) | UI-06 |
 | SCR-PAR-05 | Hồ sơ ứng viên | `/parent/candidates/[applicationId]` | FR-11, FR-28 | S06 | SV4 | chưa viết (S04) | UI-20 |
 | SCR-PAR-06 | Lộ trình và buổi học | `/parent/roadmaps` | FR-15–FR-19 | S07 | SV4 | chưa viết (S05) | UI-08 |
 | SCR-PAR-07 | Chi tiết lộ trình | `/parent/roadmaps/[id]` | FR-15–FR-23 | S07–S10 | SV4 | chưa viết (S05) | UI-09, UI-10 |
 | SCR-PAR-08 | Học phí | `/parent/payments` | FR-24, FR-25 | S09 | SV4 | chưa viết (S07) | UI-11 |
 | SCR-ADM-01 | Tổng quan | `/admin/dashboard` | FR-33 | S11 | SV4 | chưa viết (S08) | UI-18 |
-| SCR-ADM-02 | Duyệt hồ sơ gia sư | `/admin/tutor-profiles` | FR-04 | S04 | SV4 | chưa viết (S02) | UI-15 |
+| SCR-ADM-02 | Duyệt hồ sơ gia sư | `/admin/tutor-profiles` | FR-04 | S04 | SV4 | **đã viết** | UI-15 |
 | SCR-ADM-03 | Xác thực sinh viên | `/admin/student-verifications` | FR-02 | S03 | SV4 | **đã viết** | UI-15 |
-| SCR-ADM-04 | Duyệt tin | `/admin/jobs` | FR-06 | S04 | SV4 | chưa viết (S02) | UI-16 |
+| SCR-ADM-04 | Duyệt tin | `/admin/jobs` | FR-06 | S04 | SV4 | **đã viết** | UI-16 |
 | SCR-ADM-05 | Báo cáo vi phạm | `/admin/violations` | FR-29–FR-31 | S07, S11 | SV4 | chưa viết (S05) | UI-17 |
 | SCR-COM-01 | Thông báo | `/<vai-trò>/notifications` | FR-32 | S03 | SV2 | **đã viết** | UI-14 |
 | SCR-COM-02 | Cài đặt email | `/<vai-trò>/notifications/settings` | FR-32 | S03 | SV2 | **đã viết** | UI-14 |
@@ -579,12 +579,343 @@ SCR-TUT-04 … SCR-TUT-09 — xem bảng §3, cột "Đặc tả".
 
 ## 7. Phụ huynh
 
-Chưa có màn hình nào thuộc S01–S03. SCR-PAR-01 … SCR-PAR-03 viết ở thẻ `[Docs]` S02 (frontend
-làm ở S04).
+Không có bộ chọn học sinh dùng chung giữa các màn hình (chốt mục 2 của §10): mỗi màn hình cần
+lọc theo học sinh tự có ô chọn riêng, bắt đầu ở "Tất cả học sinh", không nhớ lựa chọn khi đổi
+trang.
+
+### SCR-PAR-01 — Học sinh của tôi
+
+- **Mục đích:** Phụ huynh khai báo học sinh để đăng tin tìm gia sư cho từng học sinh.
+- **Route:** `/parent/students` · **Vai trò:** Phụ huynh
+- **Yêu cầu:** FR-05 · UC-14 · AC-REQUEST-01, AC-REQUEST-02, AC-REQUEST-03
+- **API:** `GET /api/students/mine`, `POST /api/students`, `PUT /api/students/{id}` (chờ S03-03)
+
+**Bố cục**
+
+```text
+Học sinh của tôi                                         [1] ( + Thêm học sinh )
+Thêm học sinh trước khi đăng tin tìm gia sư cho học sinh đó.
+
+[2] ┌──────────────────────────────────────────────────────────────────────┐
+    │ Nguyễn Minh An                                                       │
+    │ Lớp 11                                                               │
+    │ ( Sửa )  ( Đăng tin cho học sinh này )                               │
+    ├──────────────────────────────────────────────────────────────────────┤
+    │ Nguyễn Minh Châu                                                     │
+    │ Lớp 6                                                                │
+    │ ( Sửa )  ( Đăng tin cho học sinh này )                               │
+    └──────────────────────────────────────────────────────────────────────┘
+
+[3] Hộp thoại "Thêm học sinh" / "Sửa học sinh"
+    Họ và tên    [                    ]
+    Lớp          [ Chọn lớp ▾ ]
+                                     ( Hủy )  ( Lưu )
+```
+
+**Vùng**
+
+| # | Thành phần | Dữ liệu | API |
+| :-- | :-- | :-- | :-- |
+| 1 | Nút thêm | Mở [3] trống | — |
+| 2 | Danh sách | Mỗi học sinh một thẻ: `fullName`, "Lớp `gradeLevel`". Thứ tự backend trả (thêm trước lên trước). Không phân trang | `GET /api/students/mine` |
+| 3 | Hộp thoại | Họ và tên (2–100 ký tự sau khi bỏ khoảng trắng); Lớp: ô chọn "Lớp 1" … "Lớp 12", bắt đầu rỗng | `POST /api/students`, `PUT /api/students/{id}` |
+
+**Trạng thái** — rỗng: "Bạn chưa thêm học sinh nào. Thêm học sinh để đăng tin tìm gia sư.", kèm
+nút "Thêm học sinh".
+
+**Hành vi**
+
+1. Câu thông báo phía client: "Họ tên từ 2 đến 100 ký tự", "Vui lòng chọn lớp".
+2. **Lưu:** thêm → `POST`, sửa → `PUT`; thành công thì đóng [3], dải "Đã thêm học sinh." / "Đã
+   cập nhật học sinh.", làm mới `["students", "mine"]`. Lỗi → khung lỗi trong hộp thoại, giữ dữ
+   liệu đã nhập. 404 khi sửa → hiện message, đóng hộp thoại, làm mới.
+3. **Đăng tin cho học sinh này:** sang `/parent/jobs/new?studentId=<id>` (SCR-PAR-03 chọn sẵn học
+   sinh).
+4. Không có nút xóa học sinh (CC-05).
+
+**Quy tắc liên quan** — D24; CC-05.
+
+---
+
+### SCR-PAR-02 — Tin tìm gia sư
+
+- **Mục đích:** Phụ huynh theo dõi các tin đã đăng: chờ duyệt, bị từ chối vì sao, đang tuyển tới
+  khi nào, có bao nhiêu ứng viên; sửa hoặc đóng tin.
+- **Route:** `/parent/jobs` (`/parent` chuyển tới đây) · **Vai trò:** Phụ huynh
+- **Yêu cầu:** FR-05, FR-35 · UC-14, UC-17 · AC-REQUEST-07, AC-REQUEST-09, AC-REQUEST-10
+- **API:** `GET /api/students/mine`, `GET /api/tutor-requests/mine?status=&studentId=&page=&pageSize=`,
+  `POST /api/tutor-requests/{id}/close` (chờ S03-03)
+
+**Bố cục**
+
+```text
+Tin tìm gia sư                                                [1] ( + Đăng tin )
+Tin chỉ hiển thị với gia sư sau khi Quản trị viên duyệt.
+
+[2] ( Tất cả ) ( Chờ duyệt ) ( Đang tuyển ) ( Bị từ chối ) ( Đã tuyển ) ( Đã đóng )
+[3] Học sinh: [ Tất cả học sinh ▾ ]
+
+[4] (dải nhắc gia hạn tin — FR-35, viết ở S03)
+
+[5] ┌──────────────────────────────────────────────────────────────────────┐
+    │ ● Đang tuyển                                   Hiển thị đến 23/12/2026 │
+    │ Toán · THPT — cho Nguyễn Minh An (Lớp 11)                            │
+    │ Tại nhà · TP. Hồ Chí Minh — Phường Bến Thành · 2 buổi/tuần            │
+    │ 150.000 – 250.000 ₫/buổi · Duyệt lúc 23/11/2026 10:00                 │
+    │ 3 ứng viên đang chờ                                                   │
+    │ ( Xem ứng viên )  ( Sửa )  ( Đóng tin )                               │
+    ├──────────────────────────────────────────────────────────────────────┤
+    │ ● Bị từ chối                                                          │
+    │ Tiếng Anh · THCS — cho Nguyễn Minh Châu (Lớp 6)                       │
+    │ ⚠ Lý do: Tin yêu cầu phí nhận lớp, vi phạm quy chế.                   │
+    │ ( Sửa và gửi lại )                                                    │
+    └──────────────────────────────────────────────────────────────────────┘
+[6] < 1 2 >
+```
+
+**Vùng**
+
+| # | Thành phần | Dữ liệu | API |
+| :-- | :-- | :-- | :-- |
+| 1 | Nút đăng tin | Sang SCR-PAR-03 (`/parent/jobs/new`) | — |
+| 2 | Tab trạng thái | Tất cả (mặc định) và 5 trạng thái §2.3 business-rules; `aria-pressed` | — |
+| 3 | Chọn học sinh | "Tất cả học sinh" + từng học sinh. Chỉ hiện khi có từ 2 học sinh | `GET /api/students/mine` |
+| 4 | Dải gia hạn | Thuộc FR-35, đặc tả ở thẻ `[Docs]` S03; frontend S04 chưa làm vùng này | — |
+| 5 | Danh sách | Mới cập nhật trước. Mỗi thẻ: nhãn trạng thái; `subjectName` · cấp học; học sinh và lớp; hình thức dạy, tỉnh + phường (tin `Online` ghi "Trực tuyến"), số buổi/tuần; khoảng học phí "/buổi"; mốc thời gian theo trạng thái (`submittedAtUtc` khi chờ duyệt, `reviewedAtUtc` khi đã xử lý); "Hiển thị đến `expiresAtUtc`" khi `Recruiting`; lý do khi `Rejected`; "N ứng viên đang chờ" từ `openApplicationCount` khi `Recruiting` và N > 0; các nút | `GET /api/tutor-requests/mine` |
+| 6 | Phân trang | Server, 20/trang | — |
+
+**Trạng thái** — chưa có học sinh: thay [2]–[6] bằng `EmptyState` "Bạn cần thêm học sinh trước khi
+đăng tin.", nút "Thêm học sinh" sang SCR-PAR-01. Có học sinh nhưng chưa có tin: "Bạn chưa đăng tin
+nào.", nút "Đăng tin". Tab hoặc học sinh đang chọn không có tin: "Không có tin nào ở trạng thái
+này.".
+
+**Hành vi**
+
+1. **Nút theo trạng thái tin:**
+
+   | Trạng thái | Sửa | Đóng tin | Xem ứng viên |
+   | :-- | :-- | :-- | :-- |
+   | `PendingReview` | ✓ | — | — |
+   | `Rejected` | ✓ "Sửa và gửi lại" | — | — |
+   | `Recruiting` | ✓ | ✓ | ✓ |
+   | `Hired` | — | — | ✓ |
+   | `Closed` | — | — | — |
+
+   "Sửa" sang SCR-PAR-03 (`/parent/jobs/[id]/edit`). "Xem ứng viên" sang SCR-PAR-04
+   (`/parent/jobs/[id]`); màn hình đó làm ở S06, trước đó **ẩn** nút này.
+2. **Đóng tin:** `ConfirmDialog` (variant `danger`) "Đóng tin Toán · THPT cho Nguyễn Minh An? Tin
+   ngừng nhận ứng tuyển, các ứng viên đang chờ sẽ được báo không được nhận. Tin đã đóng không mở lại
+   được." → `POST .../close`. Thành công → dải "Đã đóng tin.", làm mới `["tutor-requests", "mine"]`.
+   409 (tin vừa đổi trạng thái) → hiện message, làm mới.
+3. Đổi tab hoặc học sinh → về trang 1. Tham số lọc gửi qua `params` (`status`, `studentId`).
+
+**Quy tắc liên quan** — BR-06; §2.3, §2.4 business-rules; D33.
+
+---
+
+### SCR-PAR-03 — Đăng / sửa tin
+
+- **Mục đích:** Phụ huynh nhập nội dung tin tìm gia sư để gửi Quản trị viên duyệt.
+- **Route:** `/parent/jobs/new` (nhận `?studentId=` để chọn sẵn học sinh),
+  `/parent/jobs/[id]/edit` · **Vai trò:** Phụ huynh
+- **Yêu cầu:** FR-05 · UC-14 · AC-REQUEST-03 … AC-REQUEST-08
+- **API:** `GET /api/students/mine`, `GET /api/subjects`, `GET /api/tutor-requests/{id}`,
+  `POST /api/tutor-requests`, `PUT /api/tutor-requests/{id}` (chờ S03-03)
+
+**Bố cục**
+
+```text
+← Tin tìm gia sư
+Đăng tin tìm gia sư                          [0] (khi sửa) ● Bị từ chối — ⚠ Lý do: ...
+[1] (khung lỗi)
+
+[2] Học sinh            [ Chọn học sinh ▾ ]   + Thêm học sinh
+[3] Môn học             [ Chọn môn ▾ ]        [4] Cấp học  [ Chọn cấp học ▾ ]
+[5] Hình thức dạy       [ Chọn hình thức ▾ ]
+[6] Tỉnh/thành          [ Chọn tỉnh/thành ▾ ]  [7] Phường/xã [                ]
+[8] Địa chỉ cụ thể      [                                          ] (không bắt buộc)
+    Chỉ Quản trị viên xem được; gia sư không thấy địa chỉ này.
+[9] Số buổi mỗi tuần    [ Chọn ▾ ]
+[10] Học phí mỗi buổi   từ [ 150000 ] đến [ 250000 ] ₫   = 150.000 – 250.000 ₫/buổi
+[11] Yêu cầu với gia sư [                                          ] 0/2000
+     Ghi lịch học mong muốn, yêu cầu về gia sư. Tin đòi đặt cọc, phí giữ chỗ, phí nhận lớp sẽ
+     bị từ chối.
+                                          ( Hủy )  [12] ( Gửi duyệt )
+```
+
+**Vùng**
+
+| # | Thành phần | Dữ liệu | API |
+| :-- | :-- | :-- | :-- |
+| 0 | Nhãn trạng thái, lý do từ chối | Chỉ khi sửa; lý do chỉ hiện khi `Rejected` | `GET /api/tutor-requests/{id}` |
+| 1 | Lỗi từ server | `errors` hoặc `message` | — |
+| 2 | Học sinh | Học sinh của mình, "Họ tên (Lớp N)"; bắt đầu rỗng, trừ khi `?studentId=` khớp một học sinh. Liên kết "Thêm học sinh" sang SCR-PAR-01 | `GET /api/students/mine` |
+| 3 | Môn học | Danh mục môn, bắt đầu rỗng | `GET /api/subjects` |
+| 4 | Cấp học | `EducationLevel`, bắt đầu rỗng | — |
+| 5 | Hình thức dạy | `TeachingMode`, bắt đầu rỗng | — |
+| 6 | Tỉnh/thành | Danh mục 34 tỉnh/thành `src/lib/provinces.ts` (D37). Ẩn khi `Online` | — |
+| 7 | Phường/xã | 1–100 ký tự. Ẩn khi `Online` | — |
+| 8 | Địa chỉ cụ thể | ≤ 200 ký tự, không bắt buộc. Ẩn khi `Online` | — |
+| 9 | Số buổi mỗi tuần | Ô chọn 1–7, bắt đầu rỗng | — |
+| 10 | Học phí | Hai số nguyên 50.000–2.000.000, từ ≤ đến; hiện kèm bản định dạng | — |
+| 11 | Yêu cầu | Bắt buộc, ≤ 2000 ký tự, có bộ đếm | — |
+| 12 | Nút gửi | Tạo: "Gửi duyệt" → `POST`. Sửa: "Lưu và gửi duyệt" → `PUT`. "Đang gửi..." khi gửi | xem trên |
+
+**Trạng thái** — chưa có học sinh nào: thay form bằng `EmptyState` "Bạn cần thêm học sinh trước khi
+đăng tin.", nút sang SCR-PAR-01. Sửa tin không tồn tại hoặc của người khác (404): `EmptyState`
+"Không tìm thấy tin." kèm nút về SCR-PAR-02. Tin `Hired`/`Closed`: mọi ô chỉ đọc, ẩn nút gửi, dải
+"Tin đã tuyển hoặc đã đóng, không sửa được.".
+
+**Hành vi**
+
+1. Câu thông báo phía client: "Vui lòng chọn học sinh", "Vui lòng chọn môn học", "Vui lòng chọn
+   cấp học", "Vui lòng chọn hình thức dạy", "Vui lòng chọn tỉnh/thành", "Phường/xã từ 1 đến 100
+   ký tự", "Địa chỉ không quá 200 ký tự", "Vui lòng chọn số buổi mỗi tuần", "Học phí từ 50.000 đến
+   2.000.000 đồng", "Học phí tối thiểu không được lớn hơn tối đa", "Vui lòng nhập yêu cầu với gia
+   sư", "Yêu cầu không quá 2000 ký tự".
+2. Đổi hình thức sang `Online` thì ẩn [6]–[8] và không gửi ba trường đó; đổi lại thì hiện giá trị
+   đã nhập trước đó.
+3. **Tạo:** `POST` → 201 → `router.replace("/parent/jobs")` với dải "Đã gửi tin. Tin hiển thị với
+   gia sư sau khi Quản trị viên duyệt.".
+4. **Sửa tin `Recruiting`:** bấm gửi → `ConfirmDialog` "Tin sẽ chuyển sang Chờ duyệt và tạm ẩn với
+   gia sư cho tới khi được duyệt lại. Ứng viên đã ứng tuyển vẫn giữ nguyên." Tin `PendingReview`,
+   `Rejected` gửi không hỏi. Thành công → về SCR-PAR-02 với dải "Đã gửi lại tin để duyệt.".
+5. 400 → liệt kê `errors` ở [1]. 404 `studentId` (học sinh vừa không còn thuộc mình) → hiện
+   message, làm mới danh sách học sinh. 409 (tin vừa đổi sang `Hired`/`Closed`) → hiện message,
+   tải lại tin.
+6. **Hủy / mũi tên quay lại:** có thay đổi chưa lưu thì hỏi (§4.3), rồi về SCR-PAR-02.
+
+**Quy tắc liên quan** — BR-06, BR-24; §2.3 business-rules; D24, D33, D37.
 
 ---
 
 ## 8. Quản trị viên
+
+### SCR-ADM-02 — Duyệt hồ sơ gia sư
+
+- **Mục đích:** Admin đối chiếu nội dung và minh chứng của hồ sơ gia sư rồi duyệt hoặc từ chối.
+- **Route:** `/admin/tutor-profiles` · **Vai trò:** Admin
+- **Yêu cầu:** FR-04 · UC-02 · AC-ADMIN-REVIEW-01 … AC-ADMIN-REVIEW-04, AC-ADMIN-REVIEW-07
+- **API:** `GET /api/tutor-profiles?status=&page=&pageSize=`, `GET /api/tutor-profiles/{id}`,
+  `POST /api/tutor-profiles/{id}/approve`, `POST /api/tutor-profiles/{id}/reject` (chờ S03-01)
+
+**Bố cục**
+
+```text
+Duyệt hồ sơ gia sư
+[1] ( Chờ duyệt 5 ) ( Đã duyệt ) ( Bị từ chối )                        ( Làm mới )
+[2] ┌───────────────────┬──────────────────────────┬──────────────────┬────────────┬─────────┐
+    │ Gia sư            │ Hồ sơ                    │ Khu vực / Học phí│ Gửi duyệt  │         │
+    ├───────────────────┼──────────────────────────┼──────────────────┼────────────┼─────────┤
+    │ Nguyễn Văn A      │ Toán THPT & luyện thi    │ TP. HCM          │ 22/11 08:00│ ( Xem ) │
+    │ ✓ Đã xác thực     │ Toán, Vật lý · THPT      │ 200.000 ₫/buổi   │            │         │
+    └───────────────────┴──────────────────────────┴──────────────────┴────────────┴─────────┘
+[3] < 1 2 >   Hiển thị 1 - 20 trong 25 kết quả
+
+[4] Hộp thoại "Hồ sơ gia sư"
+    Nguyễn Văn A · a@gm.uit.edu.vn · 0912345678 · ✓ Đã xác thực sinh viên
+    ● Chờ duyệt · Gửi lúc 22/11/2026 08:00
+    ⚠ Lần trước bị từ chối: Thiếu bảng điểm.
+    Toán THPT & luyện thi đại học
+    Toán, Vật lý · THPT · Cả hai · TP. Hồ Chí Minh — Phường Bến Thành
+    200.000 ₫/buổi
+    Giới thiệu: ...
+    Minh chứng (2): [ảnh] Bang-diem.pdf ( Mở tệp PDF )
+    ( Từ chối )                                                 ( Duyệt )
+```
+
+**Vùng**
+
+| # | Thành phần | Dữ liệu | API |
+| :-- | :-- | :-- | :-- |
+| 1 | Tab trạng thái | `PendingReview` (mặc định, số đếm từ `totalCount`), `Approved`, `Rejected`; `aria-pressed` | — |
+| 2 | Bảng / thẻ | Họ tên gia sư và huy hiệu xác thực (chỉ khi `Verified`); tiêu đề, môn, cấp học; tỉnh/thành (hồ sơ chỉ `Online` ghi "Trực tuyến"), học phí/buổi; `submittedAtUtc`. Tab `PendingReview` cũ nhất trước; hai tab còn lại mới xử lý trước, thêm cột người duyệt và `reviewedAtUtc` | `GET /api/tutor-profiles?status=` |
+| 3 | Phân trang | Server, 20/trang | — |
+| 4 | Hộp thoại chi tiết | Khối `tutor` (họ tên, email, số điện thoại, nhãn xác thực sinh viên); nhãn trạng thái, `submittedAtUtc`; `rejectReason` (với `PendingReview` ghi "Lần trước bị từ chối: …", với `Rejected` ghi "Lý do: …"); toàn bộ nội dung hồ sơ, giới thiệu giữ xuống dòng; minh chứng: ảnh hiện thẳng, PDF có nút mở tab mới | `GET /api/tutor-profiles/{id}` |
+
+**Trạng thái** — rỗng theo tab: "Chưa có hồ sơ nào chờ duyệt." / "Chưa có hồ sơ nào được duyệt." /
+"Chưa có hồ sơ nào bị từ chối.". Chi tiết lỗi tải → `ErrorAlert` trong hộp thoại, nút "Thử lại".
+
+**Hành vi**
+
+1. Đổi tab → về trang 1.
+2. **Duyệt:** `ConfirmDialog` (variant `primary`) "Duyệt hồ sơ 'Toán THPT & luyện thi đại học' của
+   Nguyễn Văn A? Gia sư dùng được hồ sơ này để ứng tuyển." → `POST .../approve`.
+3. **Từ chối:** mở form trong hộp thoại, ô "Lý do" bắt buộc, ≤ 500 ký tự, có bộ đếm; gợi ý dưới ô:
+   "Lý do sẽ gửi cho gia sư, nêu rõ cần sửa hoặc bổ sung gì." → `POST .../reject` `{ reason }`.
+   Câu phía client: "Vui lòng nhập lý do từ chối", "Lý do không quá 500 ký tự".
+4. Thành công → đóng hộp thoại, dải thành công, làm mới `["tutor-profiles"]` (hồ sơ rời tab Chờ
+   duyệt) và `["notifications"]`. 409 (Admin khác vừa xử lý) → hiện message, đóng hộp thoại, làm
+   mới.
+5. Nút Duyệt/Từ chối chỉ có ở hồ sơ `PendingReview`. Không có nút sửa nội dung hồ sơ
+   (BR-SCOPE-04).
+6. Ảnh minh chứng tải lỗi → gọi lại chi tiết để lấy URL mới (§4.5).
+
+**Quy tắc liên quan** — BR-05, BR-22, BR-25, BR-SCOPE-04; D16, D36.
+
+---
+
+### SCR-ADM-04 — Duyệt tin
+
+- **Mục đích:** Admin kiểm nội dung tin tìm gia sư trước khi tin hiện với gia sư.
+- **Route:** `/admin/jobs` · **Vai trò:** Admin
+- **Yêu cầu:** FR-06 · UC-14 · AC-ADMIN-REVIEW-05, AC-ADMIN-REVIEW-06, AC-ADMIN-REVIEW-07
+- **API:** `GET /api/tutor-requests?status=&page=&pageSize=`, `GET /api/tutor-requests/{id}`,
+  `POST /api/tutor-requests/{id}/approve`, `POST /api/tutor-requests/{id}/reject` (chờ S03-01)
+
+**Bố cục**
+
+```text
+Duyệt tin
+[1] ┌ Từ chối tin có yêu cầu đặt cọc, phí giữ chỗ, phí nhận lớp, học phí bất thường ┐
+    └ hoặc nội dung không phù hợp. Lý do từ chối được gửi cho phụ huynh.            ┘
+[2] ( Chờ duyệt 3 ) ( Đang tuyển ) ( Bị từ chối ) ( Đã tuyển ) ( Đã đóng )     ( Làm mới )
+[3] ┌──────────────────────┬──────────────┬──────────────────┬──────────────────┬────────────┬─────────┐
+    │ Tin                  │ Phụ huynh    │ Khu vực          │ Học phí          │ Gửi duyệt  │         │
+    ├──────────────────────┼──────────────┼──────────────────┼──────────────────┼────────────┼─────────┤
+    │ Toán · THPT          │ Trần Thị B   │ TP. HCM —        │ 150.000–250.000 ₫│ 23/11 09:30│ ( Xem ) │
+    │ Học sinh lớp 11      │              │ Phường Bến Thành │ 2 buổi/tuần      │            │         │
+    └──────────────────────┴──────────────┴──────────────────┴──────────────────┴────────────┴─────────┘
+[4] < 1 2 >
+
+[5] Hộp thoại "Tin tìm gia sư"
+    ● Chờ duyệt · Gửi lúc 23/11/2026 09:30
+    ⚠ Lần trước bị từ chối: ...
+    Phụ huynh: Trần Thị B · b@example.com · 0987654321
+    Học sinh: Nguyễn Minh An · Lớp 11
+    Toán · THPT · Tại nhà · TP. Hồ Chí Minh — Phường Bến Thành
+    Địa chỉ: 12 Lê Lợi
+    2 buổi/tuần · 150.000 – 250.000 ₫/buổi
+    Yêu cầu với gia sư: ...
+    ( Từ chối )                                                 ( Duyệt )
+```
+
+**Vùng**
+
+| # | Thành phần | Dữ liệu | API |
+| :-- | :-- | :-- | :-- |
+| 1 | Tiêu chí duyệt | Chữ cố định (BR-06) | — |
+| 2 | Tab trạng thái | `PendingReview` (mặc định, có số đếm) và 4 trạng thái còn lại §2.3; `aria-pressed` | — |
+| 3 | Bảng / thẻ | Môn · cấp học, lớp học sinh; họ tên phụ huynh; tỉnh + phường hoặc "Trực tuyến"; khoảng học phí/buổi, số buổi/tuần; `submittedAtUtc`. Tab `PendingReview` cũ nhất trước; tab khác mới xử lý trước, thêm cột người duyệt và `reviewedAtUtc`; tab `Recruiting` thêm cột "Hiển thị đến" (`expiresAtUtc`) | `GET /api/tutor-requests?status=` |
+| 4 | Phân trang | Server, 20/trang | — |
+| 5 | Hộp thoại chi tiết | Nhãn trạng thái, `submittedAtUtc`; `rejectReason` như SCR-ADM-02; khối `parent` (họ tên, email, số điện thoại); họ tên, lớp học sinh; toàn bộ nội dung tin kể cả `address`; yêu cầu giữ xuống dòng, văn bản thuần | `GET /api/tutor-requests/{id}` |
+
+**Trạng thái** — rỗng theo tab: "Chưa có tin nào chờ duyệt." / "Chưa có tin nào đang tuyển." /
+"Chưa có tin nào bị từ chối." / "Chưa có tin nào đã tuyển." / "Chưa có tin nào đã đóng.".
+
+**Hành vi**
+
+1. Đổi tab → về trang 1.
+2. **Duyệt:** `ConfirmDialog` (variant `primary`) "Duyệt tin Toán · THPT của Trần Thị B? Tin hiển
+   thị với gia sư trong 30 ngày." → `POST .../approve`.
+3. **Từ chối:** như SCR-ADM-02 hành vi 3, gợi ý dưới ô: "Lý do sẽ gửi cho phụ huynh, nêu rõ cần sửa
+   gì để tin được duyệt."
+4. Thành công, 409: như SCR-ADM-02 hành vi 4, làm mới `["tutor-requests"]` và `["notifications"]`.
+5. Nút Duyệt/Từ chối chỉ có ở tin `PendingReview`. Không có nút sửa hay đóng tin (BR-SCOPE-04).
+
+**Quy tắc liên quan** — BR-05, BR-06, BR-22, BR-SCOPE-04; D33.
+
+---
 
 ### SCR-ADM-03 — Xác thực sinh viên
 
@@ -645,7 +976,7 @@ xác thực." / "Chưa có yêu cầu nào bị từ chối."
 
 ### Màn hình Admin chưa viết
 
-SCR-ADM-01, SCR-ADM-02, SCR-ADM-04, SCR-ADM-05 — xem bảng §3.
+SCR-ADM-01, SCR-ADM-05 — xem bảng §3.
 
 ---
 
@@ -758,6 +1089,7 @@ Chưa viết — xem bảng §3.
 
 ## 10. Còn mở
 
-1. Gia sư có nhiều hồ sơ: khi ứng tuyển chọn hồ sơ nào hiện cho phụ huynh — viết ở SCR-TUT-05 (S03).
-2. Phụ huynh có nhiều học sinh: bộ chọn học sinh dùng chung giữa các màn hình — viết ở
-   SCR-PAR-01 (S02).
+1. Gia sư có nhiều hồ sơ: khi ứng tuyển, gia sư tự chọn một hồ sơ `Approved` (FR-09); giao diện
+   chọn hồ sơ viết ở SCR-TUT-05 (S03).
+2. ~~Phụ huynh có nhiều học sinh: bộ chọn học sinh dùng chung~~ — đã chốt ở §7: không có bộ chọn
+   dùng chung, mỗi màn hình tự lọc theo học sinh.

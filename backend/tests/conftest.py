@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
@@ -6,16 +7,20 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine, make_url
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import Settings
+from app.core.file_storage import get_file_storage
 from app.core.security import SupabaseTokenVerifier, get_token_verifier
 from app.db.base import Base
 from app.db.models import Role, User
 from app.db.session import get_db
 from app.main import app
+from tests.fakes import InMemoryFileStorage
+
+pytest_plugins = ["tests.profile_fixtures"]
 
 TEST_ISSUER = "https://test-project.supabase.co/auth/v1"
 TEST_AUDIENCE = "authenticated"
@@ -36,13 +41,22 @@ def verifier(private_key) -> SupabaseTokenVerifier:  # type: ignore[no-untyped-d
     return SupabaseTokenVerifier(settings, key_resolver=lambda token: private_key.public_key())
 
 
+def _test_engine() -> Engine:
+    url = os.getenv("TEST_DATABASE_URL")
+    if not url:
+        return create_engine(
+            "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+        )
+    if "test" not in (make_url(url).database or ""):
+        raise RuntimeError("TEST_DATABASE_URL phải trỏ tới database test riêng (tên chứa 'test').")
+    return create_engine(url)
+
+
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
+    engine = _test_engine()
     Base.metadata.create_all(engine)
-    factory = sessionmaker(bind=engine, expire_on_commit=False)
+    factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     with factory() as session:
         session.add_all(
             [
@@ -54,19 +68,30 @@ def db_session() -> Generator[Session, None, None]:
         session.commit()
         yield session
     Base.metadata.drop_all(engine)
+    engine.dispose()
+
+
+@pytest.fixture
+def storage() -> InMemoryFileStorage:
+    return InMemoryFileStorage()
 
 
 @pytest.fixture
 async def client(
-    db_session: Session, verifier: SupabaseTokenVerifier
+    db_session: Session, verifier: SupabaseTokenVerifier, storage: InMemoryFileStorage
 ) -> AsyncGenerator[AsyncClient, None]:
     def override_db() -> Generator[Session, None, None]:
-        yield db_session
+        try:
+            yield db_session
+        finally:
+            db_session.rollback()
 
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_token_verifier] = lambda: verifier
+    app.dependency_overrides[get_file_storage] = lambda: storage
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://testserver"
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://testserver",
     ) as test_client:
         yield test_client
     app.dependency_overrides.clear()

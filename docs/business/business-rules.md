@@ -89,6 +89,11 @@ gia sư chính thức) | `Closed` (phụ huynh đóng tin); sửa tin `Recruitin
 `Pending → Viewed` (phụ huynh mở chi tiết phiếu); `Pending | Viewed → TrialInvited | Rejected`;
 `TrialInvited → Hired | NotHired`; `Pending | Viewed → Withdrawn` (gia sư rút).
 Một phiếu `Hired` → tin sang `Hired`, các phiếu còn mở khác của tin đó → `Rejected`.
+Phụ huynh đóng tin (`Recruiting → Closed`) → phiếu `Pending`/`Viewed` của tin đó → `Rejected`,
+`TrialInvited` → `NotHired` (FR-05).
+
+**Phiếu mở** = `Pending`, `Viewed`, `TrialInvited` (dùng để chặn ứng tuyển trùng tin, BR-08).
+**Phiếu đang chờ** = `Pending`, `Viewed` (dùng để tính hạn mức 5 phiếu, D21).
 
 ### 2.5 Lộ trình `LearningRoadmap.Status`
 `Draft` (Nháp) → `PendingParent` (Chờ phụ huynh duyệt) → `Active` (Đang học) | `Draft` (cần sửa);
