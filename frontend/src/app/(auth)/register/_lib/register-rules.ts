@@ -30,9 +30,18 @@ export const ROLE_VALIDATE = {
   required: (value: RegisterFormValues["role"]) => value !== "" || "Vui lòng chọn vai trò",
 };
 
+// Chuẩn hóa khoảng trắng giống validator backend (" ".join(value.split()) — BR-01)
+export function normalizeFullName(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function normalizeFullNameValue(value: unknown) {
+  return typeof value === "string" ? normalizeFullName(value) : value;
+}
+
 export const FULL_NAME_VALIDATE = {
   length: (value: string) => {
-    const length = value.trim().length;
+    const length = normalizeFullName(value).length;
     return (length >= 2 && length <= 100) || "Họ tên từ 2 đến 100 ký tự";
   },
 };

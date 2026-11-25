@@ -20,7 +20,9 @@ export interface RegisterRequest {
   acceptTerms: boolean;
 }
 
-// 201 trả { userId }
-export interface RegisterResponseData {
+// Khớp CurrentUserResponse của backend (GET /api/auth/me và POST /api/auth/register — FR-01)
+export interface CurrentUserResponse {
   userId: string;
+  fullName: string;
+  role: Role;
 }

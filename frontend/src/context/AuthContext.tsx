@@ -12,16 +12,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiClient, setAuthToken, toApiError, ApiError } from "@/lib/axios";
 import { supabase } from "@/lib/supabase";
 import type { AuthError } from "@supabase/supabase-js";
-import type { ApiResponse, Role } from "@/types/auth";
-
-interface AuthUser {
-  userId: string;
-  fullName: string;
-  role: Role;
-}
+import type { ApiResponse, CurrentUserResponse } from "@/types/auth";
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: CurrentUserResponse | null;
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -51,7 +45,7 @@ function toSignInError(error: AuthError): ApiError {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<CurrentUserResponse | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
@@ -68,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadBusinessProfile = useCallback(
     async (accessToken: string, skipAuthRedirect = false) => {
       setAuthToken(accessToken);
-      const res = await apiClient.get<ApiResponse<AuthUser>>("/api/auth/me", {
+      const res = await apiClient.get<ApiResponse<CurrentUserResponse>>("/api/auth/me", {
         skipAuthRedirect,
       });
       if (!res.data.success || !res.data.data) {

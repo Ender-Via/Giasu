@@ -14,6 +14,8 @@ import {
   ACCEPT_TERMS_VALIDATE,
   CONFIRM_PASSWORD_VALIDATE,
   FULL_NAME_VALIDATE,
+  normalizeFullName,
+  normalizeFullNameValue,
   PASSWORD_VALIDATE,
   PHONE_VALIDATE,
   REGISTER_DEFAULT_VALUES,
@@ -80,7 +82,7 @@ export default function RegisterPage() {
     try {
       await registerMutation.mutateAsync({
         role: values.role,
-        fullName: values.fullName.trim(),
+        fullName: normalizeFullName(values.fullName),
         phone: values.phone.trim(),
         email,
         password,
@@ -195,10 +197,13 @@ export default function RegisterPage() {
             disabled={isLocked}
             placeholder="Nguyễn Văn A"
             error={errors.fullName?.message}
-            {...register("fullName", { setValueAs: trimValue, validate: FULL_NAME_VALIDATE })}
+            {...register("fullName", {
+              setValueAs: normalizeFullNameValue,
+              validate: FULL_NAME_VALIDATE,
+            })}
           />
 
-          {/* [4] Số điện thoại */}
+          {/* [4] Số điện thoại — không đặt maxLength={10} để dán số có khoảng trắng đầu/cuối không bị cắt mất ký tự */}
           <Input
             id="phone"
             type="tel"
@@ -206,7 +211,6 @@ export default function RegisterPage() {
             label="Số điện thoại"
             required
             autoComplete="tel"
-            maxLength={10}
             disabled={isLocked}
             placeholder="0912345678"
             error={errors.phone?.message}

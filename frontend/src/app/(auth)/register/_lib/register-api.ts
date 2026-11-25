@@ -1,13 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/axios";
-import type { ApiResponse, RegisterRequest, RegisterResponseData } from "@/types/auth";
+import type { ApiResponse, CurrentUserResponse, RegisterRequest } from "@/types/auth";
 
 // POST /api/auth/register (FR-01). Không có query nào đọc tài khoản trước khi đăng nhập
 // nên không cần làm mới cache sau khi ghi.
 export function useRegister() {
   return useMutation({
     mutationFn: async (body: RegisterRequest) => {
-      const res = await apiClient.post<ApiResponse<RegisterResponseData>>(
+      const res = await apiClient.post<ApiResponse<CurrentUserResponse>>(
         "/api/auth/register",
         body
       );
