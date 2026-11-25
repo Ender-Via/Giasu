@@ -232,3 +232,53 @@ class NotificationPreference(Base):
     )
 
 
+class StudentVerification(Base):
+    __tablename__ = "student_verifications"
+    __table_args__ = (
+        Index("ix_student_verifications_tutor_id", "tutor_id"),
+        Index("ix_student_verifications_status_created_at", "status", "created_at"),
+        Index("ix_student_verifications_reviewed_by", "reviewed_by"),
+        Index(
+            "ux_student_verifications_evidence_file_ref",
+            "evidence_file_ref",
+            unique=True,
+        ),
+        Index(
+            "ux_student_verifications_tutor_id_pending",
+            "tutor_id",
+            unique=True,
+            postgresql_where=text("status = 'Pending'"),
+            sqlite_where=text("status = 'Pending'"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    tutor_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey(
+            "tutors.user_id", name="fk_student_verifications_tutor_id", ondelete="RESTRICT"
+        ),
+        nullable=False,
+    )
+    university: Mapped[str] = mapped_column(Text, nullable=False)
+    student_code: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_file_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="Pending", server_default="Pending"
+    )
+    reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_by: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey(
+            "users.id", name="fk_student_verifications_reviewed_by", ondelete="RESTRICT"
+        ),
+        nullable=True,
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    tutor: Mapped[Tutor] = relationship(foreign_keys=[tutor_id])
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
+
+
+
