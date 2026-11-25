@@ -2,7 +2,7 @@ import logging
 from uuid import UUID, uuid4
 
 from app.core.clock import utc_now
-from app.core.constants import Availability, TutorProfileStatus
+from app.core.constants import Availability, NotificationType, TutorProfileStatus
 from app.core.file_storage import SIGNED_URL_TTL_SECONDS, FileStorage, FileStorageError
 from app.db.models import Subject, TutorProfile
 from app.repositories.subjects import SubjectRepository
@@ -13,6 +13,7 @@ from app.schemas.tutor_profiles import (
     TutorProfileUpsertRequest,
 )
 from app.services.errors import ConflictError, InvalidInputError, NotFoundError
+from app.services.notifications import NotificationService, PendingEmail
 from app.services.tutor_profile_mapping import (
     attach_evidence_urls,
     to_profile_detail,
@@ -41,10 +42,12 @@ class TutorProfileService:
         profiles: TutorProfileRepository,
         subjects: SubjectRepository,
         storage: FileStorage,
+        notifications: NotificationService | None = None,
     ) -> None:
         self.profiles = profiles
         self.subjects = subjects
         self.storage = storage
+        self.notifications = notifications
 
     def list_mine(self, tutor_id: UUID) -> list[TutorProfileResponse]:
         return [to_profile_response(p) for p in self.profiles.list_for_tutor(tutor_id)]
@@ -132,7 +135,17 @@ class TutorProfileService:
             raise InvalidInputError(errors=missing)
 
         mark_pending_review(profile, utc_now())
+        pending_emails: list[PendingEmail] = []
+        if self.notifications is not None:
+            pending_emails = self.notifications.queue_for_active_admins(
+                NotificationType.MODERATION_QUEUE,
+                "Hồ sơ gia sư mới chờ duyệt",
+                f"Hồ sơ \"{profile.title}\" vừa được gửi duyệt.",
+                link="/admin/tutor-profiles",
+            )
         self.profiles.commit()
+        if self.notifications is not None and pending_emails:
+            self.notifications.dispatch_emails(pending_emails)
         return to_profile_response(profile)
 
     def _locked_profile(self, tutor_id: UUID, profile_id: UUID) -> TutorProfile:

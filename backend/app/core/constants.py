@@ -41,3 +41,55 @@ EDUCATION_LEVELS: Final = ("Primary", "LowerSecondary", "UpperSecondary", "Other
 ROLE_TUTOR: Final = "Tutor"
 ROLE_PARENT: Final = "Parent"
 ROLE_ADMIN: Final = "Admin"
+
+
+class NotificationType:
+    MODERATION_RESULT: Final = "ModerationResult"
+    NEW_APPLICATION: Final = "NewApplication"
+    APPLICATION_STATUS: Final = "ApplicationStatus"
+    ROADMAP: Final = "Roadmap"
+    SESSION: Final = "Session"
+    REQUEST_EXPIRY: Final = "RequestExpiry"
+    TUITION: Final = "Tuition"
+    PROGRESS: Final = "Progress"
+    VIOLATION: Final = "Violation"
+    MODERATION_QUEUE: Final = "ModerationQueue"
+
+    ALL: Final = (
+        MODERATION_RESULT,
+        NEW_APPLICATION,
+        APPLICATION_STATUS,
+        ROADMAP,
+        SESSION,
+        REQUEST_EXPIRY,
+        TUITION,
+        PROGRESS,
+        VIOLATION,
+        MODERATION_QUEUE,
+    )
+
+    BY_ROLE: Final[dict[str, tuple[str, ...]]] = {
+        ROLE_TUTOR: (
+            MODERATION_RESULT,
+            APPLICATION_STATUS,
+            ROADMAP,
+            SESSION,
+            TUITION,
+            PROGRESS,
+            VIOLATION,
+        ),
+        ROLE_PARENT: (
+            MODERATION_RESULT,
+            NEW_APPLICATION,
+            ROADMAP,
+            SESSION,
+            REQUEST_EXPIRY,
+            TUITION,
+            PROGRESS,
+            VIOLATION,
+        ),
+        ROLE_ADMIN: (
+            VIOLATION,
+            MODERATION_QUEUE,
+        ),
+    }

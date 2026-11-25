@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_roles
+from app.api.notifications import get_notification_service
 from app.core.constants import ROLE_TUTOR
 from app.core.file_storage import FileStorage, get_file_storage
 from app.db.session import get_db
@@ -18,6 +19,7 @@ from app.schemas.tutor_profiles import (
     TutorProfileResponse,
     TutorProfileUpsertRequest,
 )
+from app.services.notifications import NotificationService
 from app.services.tutor_profiles import TutorProfileService
 
 router = APIRouter(prefix="/api/tutor-profiles", tags=["TutorProfiles"])
@@ -28,8 +30,11 @@ TutorUser = Annotated[CurrentUserResponse, Depends(require_roles(ROLE_TUTOR))]
 def get_tutor_profile_service(
     db: Annotated[Session, Depends(get_db)],
     storage: Annotated[FileStorage, Depends(get_file_storage)],
+    notifications: Annotated[NotificationService, Depends(get_notification_service)],
 ) -> TutorProfileService:
-    return TutorProfileService(TutorProfileRepository(db), SubjectRepository(db), storage)
+    return TutorProfileService(
+        TutorProfileRepository(db), SubjectRepository(db), storage, notifications
+    )
 
 
 Service = Annotated[TutorProfileService, Depends(get_tutor_profile_service)]

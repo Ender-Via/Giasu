@@ -190,3 +190,95 @@ class TutorProfileEvidence(Base):
 
     profile: Mapped[TutorProfile] = relationship(back_populates="evidences")
 
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        Index(
+            "ix_notifications_recipient_is_read_created_at",
+            "recipient_id",
+            "is_read",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    recipient_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_notifications_recipient_id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    type: Mapped[str] = mapped_column(Text, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_notification_preferences_user_id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    type: Mapped[str] = mapped_column(Text, primary_key=True)
+    email_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+
+
+class StudentVerification(Base):
+    __tablename__ = "student_verifications"
+    __table_args__ = (
+        Index("ix_student_verifications_tutor_id", "tutor_id"),
+        Index("ix_student_verifications_status_created_at", "status", "created_at"),
+        Index("ix_student_verifications_reviewed_by", "reviewed_by"),
+        Index(
+            "ux_student_verifications_evidence_file_ref",
+            "evidence_file_ref",
+            unique=True,
+        ),
+        Index(
+            "ux_student_verifications_tutor_id_pending",
+            "tutor_id",
+            unique=True,
+            postgresql_where=text("status = 'Pending'"),
+            sqlite_where=text("status = 'Pending'"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    tutor_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey(
+            "tutors.user_id", name="fk_student_verifications_tutor_id", ondelete="RESTRICT"
+        ),
+        nullable=False,
+    )
+    university: Mapped[str] = mapped_column(Text, nullable=False)
+    student_code: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_file_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="Pending", server_default="Pending"
+    )
+    reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_by: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey(
+            "users.id", name="fk_student_verifications_reviewed_by", ondelete="RESTRICT"
+        ),
+        nullable=True,
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    tutor: Mapped[Tutor] = relationship(foreign_keys=[tutor_id])
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
+
+
+
