@@ -34,6 +34,13 @@ INSERT_PROFILE = text(
     ":expected_fee_per_session, :status, :availability, :is_default, :reject_reason, "
     ":reviewed_by, :reviewed_at, now(), now())"
 )
+INSERT_REQUEST = text(
+    "INSERT INTO tutor_requests (id, parent_id, student_id, subject_id, education_level, "
+    "teaching_mode, province, ward, sessions_per_week, min_fee, max_fee, requirements, "
+    "submitted_at, created_at, updated_at) VALUES ("
+    ":id, :parent_id, :student_id, (SELECT min(id) FROM subjects), 'UpperSecondary', "
+    ":teaching_mode, :province, :ward, 2, :min_fee, :max_fee, 'Dạy Toán', now(), now(), now())"
+)
 
 
 @pytest.fixture
@@ -84,6 +91,47 @@ def violated_constraint(connection: Connection, statement: Any, params: dict[str
         connection.execute(statement, params)
     savepoint.rollback()
     return caught.value.orig.diag.constraint_name  # type: ignore[union-attr]
+
+
+def test_request_check_khu_vuc_hoc_phi_va_chu_so_huu(db: Db) -> None:
+    connection, _, _ = db
+    parent_ids = [uuid4(), uuid4()]
+    for parent_id in parent_ids:
+        connection.execute(
+            INSERT_USER,
+            {"id": parent_id, "role_id": 3, "email": f"test.request.{parent_id}@giasu.local"},
+        )
+        connection.execute(
+            text("INSERT INTO parents (user_id, phone) VALUES (:id, '0912345678')"),
+            {"id": parent_id},
+        )
+    student_id = uuid4()
+    connection.execute(
+        text(
+            "INSERT INTO students (id, parent_id, full_name, grade_level, created_at) "
+            "VALUES (:id, :parent_id, 'Minh An', 11, now())"
+        ),
+        {"id": student_id, "parent_id": parent_ids[0]},
+    )
+    valid = {
+        "id": uuid4(),
+        "parent_id": parent_ids[0],
+        "student_id": student_id,
+        "teaching_mode": "Online",
+        "province": None,
+        "ward": None,
+        "min_fee": 150_000,
+        "max_fee": 250_000,
+    }
+    cases = [
+        ({"parent_id": parent_ids[1]}, "fk_tutor_requests_parent_student"),
+        ({"province": "Hà Nội"}, "ck_tutor_requests_area"),
+        ({"teaching_mode": "Offline", "province": "Hà Nội"}, "ck_tutor_requests_area"),
+        ({"max_fee": 100_000}, "ck_tutor_requests_fee"),
+    ]
+    for changes, constraint in cases:
+        assert violated_constraint(connection, INSERT_REQUEST, valid | changes) == constraint
+    connection.execute(INSERT_REQUEST, valid)
 
 
 def test_ho_so_hop_le_luu_duoc(db: Db) -> None:
