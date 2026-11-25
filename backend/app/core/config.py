@@ -22,10 +22,13 @@ class Settings(BaseSettings):
     cors_allowed_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000"]
     )
+    trusted_proxies: Annotated[list[str], NoDecode] = Field(default_factory=list)
     supabase_secret_key: SecretStr | None = None
     supabase_storage_bucket: str = "evidences"
 
-    @field_validator("supabase_jwt_algorithms", "cors_allowed_origins", mode="before")
+    @field_validator(
+        "supabase_jwt_algorithms", "cors_allowed_origins", "trusted_proxies", mode="before"
+    )
     @classmethod
     def split_csv(cls, value: object) -> object:
         if isinstance(value, str):
