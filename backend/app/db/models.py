@@ -190,3 +190,45 @@ class TutorProfileEvidence(Base):
 
     profile: Mapped[TutorProfile] = relationship(back_populates="evidences")
 
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        Index(
+            "ix_notifications_recipient_is_read_created_at",
+            "recipient_id",
+            "is_read",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    recipient_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_notifications_recipient_id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    type: Mapped[str] = mapped_column(Text, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("users.id", name="fk_notification_preferences_user_id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    type: Mapped[str] = mapped_column(Text, primary_key=True)
+    email_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+
+
