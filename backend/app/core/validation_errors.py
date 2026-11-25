@@ -10,6 +10,8 @@ def collect_validation_messages(errors: Iterable[dict[str, Any]]) -> list[str]:
         context_error = (error.get("ctx") or {}).get("error")
         if error.get("type") == "value_error" and context_error is not None:
             message = str(context_error)
+        elif error.get("type") == "missing" and len(error.get("loc", ())) > 1:
+            message = f"Thiếu trường {error['loc'][-1]}."
         else:
             message = GENERIC_VALIDATION_MESSAGE
         if message not in messages:

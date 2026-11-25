@@ -9,6 +9,7 @@ from app.api.notifications import get_notification_service
 from app.core.constants import ROLE_TUTOR
 from app.core.file_storage import FileStorage, get_file_storage
 from app.db.session import get_db
+from app.repositories.audit_logs import AuditLogRepository
 from app.repositories.subjects import SubjectRepository
 from app.repositories.tutor_profiles import TutorProfileRepository
 from app.schemas.auth import CurrentUserResponse
@@ -33,7 +34,11 @@ def get_tutor_profile_service(
     notifications: Annotated[NotificationService, Depends(get_notification_service)],
 ) -> TutorProfileService:
     return TutorProfileService(
-        TutorProfileRepository(db), SubjectRepository(db), storage, notifications
+        TutorProfileRepository(db),
+        SubjectRepository(db),
+        storage,
+        notifications,
+        AuditLogRepository(db),
     )
 
 

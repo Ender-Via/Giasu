@@ -8,11 +8,13 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
     SmallInteger,
     Text,
+    UniqueConstraint,
     Uuid,
     text,
 )
@@ -91,12 +93,128 @@ class Parent(Base):
     user: Mapped[User] = relationship(back_populates="parent")
 
 
+class Student(Base):
+    __tablename__ = "students"
+    __table_args__ = (
+        UniqueConstraint("parent_id", "id", name="uq_students_parent_id_id"),
+        Index("ix_students_parent_created", "parent_id", "created_at", "id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    parent_id: Mapped[UUID] = mapped_column(
+        ForeignKey("parents.user_id", name="fk_students_parent_id", ondelete="RESTRICT")
+    )
+    full_name: Mapped[str] = mapped_column(Text)
+    grade_level: Mapped[int] = mapped_column(SmallInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Subject(Base):
     __tablename__ = "subjects"
     __table_args__ = (Index("ix_subjects_name", "name", unique=True),)
 
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True, autoincrement=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TutorRequest(Base):
+    __tablename__ = "tutor_requests"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["parent_id", "student_id"],
+            ["students.parent_id", "students.id"],
+            name="fk_tutor_requests_parent_student",
+            ondelete="RESTRICT",
+        ),
+        Index("ix_tutor_requests_parent_updated", "parent_id", "updated_at", "id"),
+        Index("ix_tutor_requests_student_id", "student_id"),
+        Index("ix_tutor_requests_subject_id", "subject_id"),
+        Index("ix_tutor_requests_status_submitted", "status", "submitted_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    parent_id: Mapped[UUID] = mapped_column(
+        ForeignKey("parents.user_id", name="fk_tutor_requests_parent_id", ondelete="RESTRICT")
+    )
+    student_id: Mapped[UUID] = mapped_column(Uuid)
+    subject_id: Mapped[int] = mapped_column(
+        ForeignKey("subjects.id", name="fk_tutor_requests_subject_id", ondelete="RESTRICT")
+    )
+    education_level: Mapped[str] = mapped_column(Text)
+    teaching_mode: Mapped[str] = mapped_column(Text)
+    province: Mapped[str | None] = mapped_column(Text)
+    ward: Mapped[str | None] = mapped_column(Text)
+    address: Mapped[str | None] = mapped_column(Text)
+    sessions_per_week: Mapped[int] = mapped_column(SmallInteger)
+    min_fee: Mapped[int] = mapped_column(Integer)
+    max_fee: Mapped[int] = mapped_column(Integer)
+    requirements: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="PendingReview")
+    reject_reason: Mapped[str | None] = mapped_column(Text)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    reviewed_by: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", name="fk_tutor_requests_reviewed_by", ondelete="RESTRICT")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    student: Mapped[Student] = relationship()
+    subject: Mapped[Subject] = relationship()
+
+
+class TutorApplication(Base):
+    __tablename__ = "tutor_applications"
+    __table_args__ = (
+        Index("ix_tutor_applications_request_status", "request_id", "status"),
+        Index("ix_tutor_applications_tutor_status", "tutor_id", "status"),
+        Index(
+            "ux_tutor_applications_open",
+            "request_id",
+            "tutor_id",
+            unique=True,
+            postgresql_where=text("status IN ('Pending', 'Viewed', 'TrialInvited')"),
+            sqlite_where=text("status IN ('Pending', 'Viewed', 'TrialInvited')"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    request_id: Mapped[UUID] = mapped_column(
+        ForeignKey(
+            "tutor_requests.id", name="fk_tutor_applications_request_id", ondelete="RESTRICT"
+        )
+    )
+    tutor_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tutors.user_id", name="fk_tutor_applications_tutor_id", ondelete="RESTRICT")
+    )
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey(
+            "tutor_profiles.id", name="fk_tutor_applications_profile_id", ondelete="RESTRICT"
+        )
+    )
+    introduction: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="Pending")
+    trial_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    trial_note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_logs_entity_entity_id", "entity", "entity_id"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    actor_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", name="fk_audit_logs_actor_id", ondelete="RESTRICT")
+    )
+    entity: Mapped[str] = mapped_column(Text)
+    entity_id: Mapped[UUID] = mapped_column(Uuid)
+    action: Mapped[str] = mapped_column(Text)
+    from_status: Mapped[str | None] = mapped_column(Text)
+    to_status: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class TutorProfileSubject(Base):
@@ -279,6 +397,3 @@ class StudentVerification(Base):
 
     tutor: Mapped[Tutor] = relationship(foreign_keys=[tutor_id])
     reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
-
-
-
