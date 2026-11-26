@@ -45,7 +45,7 @@ const FILE_VALIDATE = {
 
 // SCR-TUT-03 — Xác thực sinh viên (FR-02)
 export default function TutorVerificationPage() {
-  const { data, isPending, error, refetch } = useMyStudentVerification();
+  const { data, isPending, isError, isFetching, error, refetch } = useMyStudentVerification();
   const createVerification = useCreateStudentVerification();
   const { notice, showSuccess, clear } = useNotice();
   const [confirmValues, setConfirmValues] = useState<VerificationFormValues | null>(null);
@@ -115,6 +115,14 @@ export default function TutorVerificationPage() {
           tưởng hơn.
         </p>
       </div>
+
+      {isError && !isFetching ? (
+        <ErrorAlert
+          title="Không làm mới được trạng thái xác thực"
+          message={toApiError(error).message}
+          onRetry={() => void refetch()}
+        />
+      ) : null}
 
       {notice ? (
         <NoticeBanner message={notice.message} role={notice.role} onClose={clear} />
@@ -198,7 +206,7 @@ export default function TutorVerificationPage() {
           />
 
           <div className="space-y-1.5">
-            <p className="block text-sm font-semibold text-on-surface">
+            <p id="verification-file-label" className="block text-sm font-semibold text-on-surface">
               Ảnh thẻ sinh viên hoặc giấy xác nhận
               <span className="ml-1 text-error">*</span>
             </p>
@@ -208,6 +216,7 @@ export default function TutorVerificationPage() {
                 id="verification-file"
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                aria-labelledby="verification-file-label"
                 aria-invalid={errors.files ? "true" : "false"}
                 aria-describedby="verification-file-help"
                 className="peer sr-only"

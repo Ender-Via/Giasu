@@ -23,10 +23,14 @@ export function setAuthToken(token: string | null): void {
   inMemoryToken = token;
 }
 
-// Request interceptor — đọc từ biến in-memory, không đọc localStorage
+// Request interceptor — đọc từ biến in-memory, không đọc localStorage.
+// Với FormData, xóa Content-Type JSON mặc định để Axios/trình duyệt tự gắn boundary (ui-screens.md §4.5).
 apiClient.interceptors.request.use((config) => {
   if (inMemoryToken) {
     config.headers.Authorization = `Bearer ${inMemoryToken}`;
+  }
+  if (config.data instanceof FormData) {
+    config.headers.delete("Content-Type");
   }
   return config;
 });

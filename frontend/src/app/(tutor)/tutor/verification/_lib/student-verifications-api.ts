@@ -23,9 +23,10 @@ export function useMyStudentVerification() {
   });
 }
 
-// Gửi yêu cầu xác thực (FR-02): multipart university, studentCode, file. Ghi đè Content-Type như
-// useUploadEvidences để axios không đổi FormData thành JSON. Ghi xong làm mới cả tutor-profiles vì
-// dải xác thực ở SCR-TUT-01 đọc trạng thái này (frontend-conventions.md §3.2).
+// Gửi yêu cầu xác thực (FR-02): multipart university, studentCode, file. Không đặt Content-Type
+// bằng tay; interceptor của apiClient gỡ header JSON cho FormData để trình duyệt tự gắn boundary
+// (ui-screens.md §4.5). Ghi xong làm mới cả tutor-profiles vì dải xác thực ở SCR-TUT-01 đọc trạng
+// thái này (frontend-conventions.md §3.2).
 export function useCreateStudentVerification() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -36,8 +37,7 @@ export function useCreateStudentVerification() {
       formData.append("file", body.file);
       const res = await apiClient.post<ApiResponse<StudentVerificationResponse>>(
         "/api/student-verifications",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
       return res.data.data;
     },

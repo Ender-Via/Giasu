@@ -99,7 +99,11 @@ export function EvidenceSection({ profile, onSuccess }: EvidenceSectionProps) {
                   {formatFileSize(evidence.sizeBytes)}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div
+                role="group"
+                aria-label={`Thao tác với tệp ${evidence.fileName}`}
+                className="flex items-center gap-2"
+              >
                 {evidence.url ? (
                   <a
                     href={evidence.url}
@@ -135,8 +139,8 @@ export function EvidenceSection({ profile, onSuccess }: EvidenceSectionProps) {
           {clientErrors.length > 0 ? (
             <div role="alert" className="rounded-2xl border border-error/30 bg-error-container/40 p-3">
               <ul className="list-disc list-inside space-y-0.5 text-xs font-medium text-error">
-                {clientErrors.map((message) => (
-                  <li key={message}>{message}</li>
+                {clientErrors.map((message, index) => (
+                  <li key={`${index}-${message}`}>{message}</li>
                 ))}
               </ul>
             </div>
@@ -149,6 +153,8 @@ export function EvidenceSection({ profile, onSuccess }: EvidenceSectionProps) {
             type="file"
             multiple
             accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+            tabIndex={-1}
+            aria-hidden="true"
             className="sr-only"
             onChange={(event) => handleFilesChosen(event.target.files)}
           />

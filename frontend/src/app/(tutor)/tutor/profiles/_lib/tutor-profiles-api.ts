@@ -63,6 +63,7 @@ export function useCreateTutorProfile() {
 }
 
 export function useUpdateTutorProfile(id: string) {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateTutorProfiles();
   return useMutation({
     mutationFn: async (body: TutorProfileUpsertRequest) => {
@@ -71,6 +72,13 @@ export function useUpdateTutorProfile(id: string) {
         body
       );
       return res.data.data;
+    },
+    onSuccess: (updated) => {
+      if (!updated) return;
+      queryClient.setQueryData<TutorProfileDetailResponse>(
+        tutorProfileQueryKey(id),
+        (old) => (old ? { ...old, ...updated } : old)
+      );
     },
     onSettled: invalidate,
   });
@@ -119,9 +127,8 @@ export function useSubmitProfile() {
   });
 }
 
-// Tải minh chứng: multipart, trường files (FR-04, D16). apiClient mặc định gửi JSON và axios sẽ
-// đổi FormData thành JSON nếu giữ header đó, nên ghi đè bằng multipart/form-data; ở trình duyệt
-// axios bỏ giá trị này để trình duyệt tự gắn boundary (ui-screens.md §4.5).
+// Tải minh chứng: multipart, trường files (FR-04, D16). Không đặt Content-Type bằng tay;
+// interceptor của apiClient gỡ header JSON cho FormData để trình duyệt tự gắn boundary (ui-screens.md §4.5).
 export function useUploadEvidences(profileId: string) {
   const invalidate = useInvalidateTutorProfiles();
   return useMutation({
@@ -130,8 +137,7 @@ export function useUploadEvidences(profileId: string) {
       files.forEach((file) => formData.append("files", file));
       const res = await apiClient.post<ApiResponse<TutorProfileEvidenceResponse[]>>(
         `/api/tutor-profiles/${profileId}/evidences`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
       return res.data.data ?? [];
     },

@@ -46,7 +46,7 @@ function EditTutorProfile() {
   const searchParams = useSearchParams();
   const isJustCreated = searchParams.get("created") === "1";
 
-  const { data: profile, isPending, error, refetch } = useTutorProfile(id);
+  const { data: profile, isPending, isError, isFetching, error, refetch } = useTutorProfile(id);
   const updateProfile = useUpdateTutorProfile(id);
   const { notice, showSuccess, clear } = useNotice(
     isJustCreated ? { message: CREATED_MESSAGE, role: "status" } : null
@@ -123,7 +123,10 @@ function EditTutorProfile() {
   return (
     <div className="py-8 space-y-4 sm:space-y-6">
       <div className="space-y-2">
-        <Link href="/tutor/profiles" className="text-sm font-semibold text-primary hover:underline">
+        <Link
+          href="/tutor/profiles"
+          className="inline-flex min-h-11 sm:min-h-0 items-center text-sm font-semibold text-primary hover:underline"
+        >
           ← Hồ sơ gia sư
         </Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -146,6 +149,14 @@ function EditTutorProfile() {
         ) : null}
       </div>
 
+      {isError && !isFetching ? (
+        <ErrorAlert
+          title="Không làm mới được hồ sơ"
+          message={toApiError(error).message}
+          onRetry={() => void refetch()}
+        />
+      ) : null}
+
       {notice ? (
         <NoticeBanner message={notice.message} role={notice.role} onClose={clear} />
       ) : null}
@@ -159,9 +170,9 @@ function EditTutorProfile() {
         </div>
       ) : null}
 
-      {/* Khóa theo lần cập nhật để form nhận lại dữ liệu mới sau khi lưu */}
+      {/* Khóa theo id và trạng thái để đổi trạng thái (Approved → PendingReview) thì reset, còn tải/gỡ minh chứng không làm mất chữ đang nhập */}
       <ProfileForm
-        key={profile.updatedAtUtc}
+        key={`${profile.id}:${profile.status}`}
         defaultValues={toFormValues(profile)}
         readOnly={isPendingReview}
         submitError={submitError}

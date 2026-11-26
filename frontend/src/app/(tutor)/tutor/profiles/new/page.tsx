@@ -39,7 +39,10 @@ export default function NewTutorProfilePage() {
   return (
     <div className="py-8 space-y-4 sm:space-y-6">
       <div className="space-y-1">
-        <Link href="/tutor/profiles" className="text-sm font-semibold text-primary hover:underline">
+        <Link
+          href="/tutor/profiles"
+          className="inline-flex min-h-11 sm:min-h-0 items-center text-sm font-semibold text-primary hover:underline"
+        >
           ← Hồ sơ gia sư
         </Link>
         <h1 className="text-2xl font-bold text-on-surface">Tạo hồ sơ</h1>

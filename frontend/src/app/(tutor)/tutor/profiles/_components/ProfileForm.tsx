@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {
   ApiErrorAlert,
@@ -68,8 +69,10 @@ export function ProfileForm({
   onSave,
   onLeave,
 }: ProfileFormProps) {
+  const router = useRouter();
   const subjectsQuery = useSubjects();
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const {
     register,
     control,
@@ -86,14 +89,46 @@ export function ProfileForm({
   const isOnline = teachingMode === "Online";
   const parsedFee = parseFee(feeInput);
 
-  // Hỏi trước khi đóng tab hay tải lại khi có thay đổi chưa lưu (ui-screens.md §4.3)
+  // Hỏi trước khi đóng tab, tải lại hoặc bấm liên kết rời trang (← Hồ sơ gia sư, menu) khi có
+  // thay đổi chưa lưu (ui-screens.md §4.3, SCR-TUT-02 hành vi 6)
   useEffect(() => {
     if (!isDirty || readOnly) return;
-    const handler = (event: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    const handleClickCapture = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const anchor = (event.target as Element | null)?.closest("a[href]") as
+        | HTMLAnchorElement
+        | null;
+      if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) {
+        return;
+      }
+      const targetUrl = new URL(anchor.href, window.location.href);
+      if (targetUrl.origin !== window.location.origin) return;
+      if (targetUrl.pathname + targetUrl.search === window.location.pathname + window.location.search) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      setPendingHref(targetUrl.pathname + targetUrl.search + targetUrl.hash);
+      setIsLeaveConfirmOpen(true);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("click", handleClickCapture, true);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("click", handleClickCapture, true);
+    };
   }, [isDirty, readOnly]);
 
   async function onSubmit(values: TutorProfileFormValues) {
@@ -103,6 +138,7 @@ export function ProfileForm({
 
   function handleLeave() {
     if (isDirty && !readOnly) {
+      setPendingHref(null);
       setIsLeaveConfirmOpen(true);
     } else {
       onLeave();
@@ -259,6 +295,7 @@ export function ProfileForm({
           rows={5}
           showCount
           maxLength={MAX_DESCRIPTION_LENGTH}
+          helperText="Không bắt buộc khi lưu nháp, nhưng cần có trước khi gửi duyệt."
           currentValue={description}
           error={errors.description?.message}
           {...register("description", { validate: DESCRIPTION_VALIDATE })}
@@ -284,10 +321,19 @@ export function ProfileForm({
 
       <ConfirmDialog
         isOpen={isLeaveConfirmOpen}
-        onClose={() => setIsLeaveConfirmOpen(false)}
-        onConfirm={() => {
+        onClose={() => {
           setIsLeaveConfirmOpen(false);
-          onLeave();
+          setPendingHref(null);
+        }}
+        onConfirm={() => {
+          const target = pendingHref;
+          setIsLeaveConfirmOpen(false);
+          setPendingHref(null);
+          if (target) {
+            router.push(target);
+          } else {
+            onLeave();
+          }
         }}
         variant="warning"
         title="Rời trang?"

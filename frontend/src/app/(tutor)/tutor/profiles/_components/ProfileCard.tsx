@@ -110,7 +110,11 @@ export function ProfileCard({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 pt-1">
+      <div
+        role="group"
+        aria-label={`Thao tác với hồ sơ ${profile.title}`}
+        className="flex flex-wrap items-center gap-2 pt-1"
+      >
         {isPendingReview ? (
           <p className="text-sm text-on-surface-variant">Đang chờ duyệt, chưa sửa được.</p>
         ) : (

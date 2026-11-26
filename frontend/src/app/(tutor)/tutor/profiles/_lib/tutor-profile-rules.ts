@@ -135,12 +135,19 @@ export function toFormValues(profile: TutorProfileResponse): TutorProfileFormVal
   };
 }
 
-// Điều còn thiếu để gửi duyệt, tính phía client cho dòng "Cần bổ sung" (SCR-TUT-01 hành vi 4).
+// Điều còn thiếu để gửi duyệt, tính phía client cho dòng "Cần bổ sung" (SCR-TUT-01 hành vi 4),
+// khớp với missing_submission_requirements ở backend (BR-04).
 // Các trường khác đã bị chặn khi lưu; backend vẫn là nơi quyết định cuối (400 kèm errors).
 export function getMissingSubmitRequirements(profile: TutorProfileResponse): string[] {
   const missing: string[] = [];
+  if (profile.subjects.length === 0) {
+    missing.push("môn dạy");
+  }
   if (profile.teachingMode !== "Online" && profile.teachingWards.length === 0) {
     missing.push("phường/xã");
+  }
+  if (!profile.description?.trim()) {
+    missing.push("giới thiệu, kinh nghiệm");
   }
   if (profile.evidenceCount === 0) {
     missing.push("minh chứng");
