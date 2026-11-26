@@ -1,0 +1,151 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "GiaSu - AUTH - FR-01 - NFR-02",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "AUTH - FR-01 - NFR-02",
+      "item": [
+        {
+          "name": "FR-01 - Auth dữ liệu sai (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"WrongRole\",\n  \"fullName\": \"\",\n  \"phone\": \"123\",\n  \"email\": \"abc\",\n  \"password\": \"123\",\n  \"acceptTerms\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Dữ liệu sai trả về 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FR-01 - Register đúng (201) - Chưa chạy do thiếu Supabase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Tutor\",\n  \"fullName\": \"Nguyen Anh Kiet\",\n  \"phone\": \"0901234567\",\n  \"email\": \"giasu.test@giasu.local\",\n  \"password\": \"TestPassword123\",\n  \"acceptTerms\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "FR-01 - Auth vượt giới hạn (429) - Chưa kiểm tra do thiếu Supabase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Tutor\",\n  \"fullName\": \"Nguyen Anh Kiet\",\n  \"phone\": \"0901234567\",\n  \"email\": \"anhkiet.test@giasu.local\",\n  \"password\": \"TestPassword123\",\n  \"acceptTerms\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Vượt giới hạn trả về 429\", function () {",
+                  "    pm.response.to.have.status(429);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FR-01 - Auth chưa xác thực (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Chưa xác thực trả về 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
