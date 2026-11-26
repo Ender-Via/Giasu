@@ -14,6 +14,7 @@ from app.schemas.tutor_profiles import (
     TutorProfileResponse,
     TutorProfileUpsertRequest,
 )
+from app.services.audit_logs import AuditLogService, as_audit_service
 from app.services.errors import ConflictError, InvalidInputError, NotFoundError
 from app.services.notifications import NotificationService, PendingEmail
 from app.services.tutor_profile_mapping import (
@@ -45,13 +46,13 @@ class TutorProfileService:
         subjects: SubjectRepository,
         storage: FileStorage,
         notifications: NotificationService,
-        audit: AuditLogRepository,
+        audit: AuditLogService | AuditLogRepository,
     ) -> None:
         self.profiles = profiles
         self.subjects = subjects
         self.storage = storage
         self.notifications = notifications
-        self.audit = audit
+        self.audit = as_audit_service(audit)
 
     def list_mine(self, tutor_id: UUID) -> list[TutorProfileResponse]:
         return [to_profile_response(p) for p in self.profiles.list_for_tutor(tutor_id)]

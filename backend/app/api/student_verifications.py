@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_roles
+from app.api.dependencies import get_audit_log_service, require_roles
 from app.api.notifications import get_notification_service
 from app.core.constants import ROLE_ADMIN, ROLE_TUTOR
 from app.core.file_storage import FileStorage, get_file_storage
@@ -20,6 +20,7 @@ from app.schemas.student_verifications import (
     RejectVerificationRequest,
     TutorVerificationResponse,
 )
+from app.services.audit_logs import AuditLogService
 from app.services.notifications import NotificationService
 from app.services.student_verifications import StudentVerificationService
 
@@ -33,9 +34,10 @@ def get_verification_service(
     db: Annotated[Session, Depends(get_db)],
     storage: Annotated[FileStorage, Depends(get_file_storage)],
     notifications: Annotated[NotificationService, Depends(get_notification_service)],
+    audit: Annotated[AuditLogService, Depends(get_audit_log_service)],
 ) -> StudentVerificationService:
     return StudentVerificationService(
-        StudentVerificationRepository(db), storage, notifications
+        StudentVerificationRepository(db), storage, notifications, audit
     )
 
 

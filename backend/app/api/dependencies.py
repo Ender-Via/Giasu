@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_auth_user
 from app.db.session import get_db
+from app.repositories.audit_logs import AuditLogRepository
 from app.repositories.auth import AuthRepository
 from app.schemas.auth import CurrentUserResponse, RoleName
+from app.services.audit_logs import AuditLogService
 from app.services.auth import AccountLockedError, AuthService
 
 FORBIDDEN_MESSAGE = "Bạn không có quyền thực hiện hành động này."
@@ -36,6 +38,12 @@ def get_current_user(
         )
 
     return current_user
+
+
+def get_audit_log_service(
+    db: Annotated[Session, Depends(get_db)],
+) -> AuditLogService:
+    return AuditLogService(AuditLogRepository(db))
 
 
 def require_roles(*roles: RoleName) -> Callable[..., CurrentUserResponse]:

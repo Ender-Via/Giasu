@@ -23,6 +23,7 @@ from app.schemas.student_verifications import (
     validate_student_code,
     validate_university,
 )
+from app.services.audit_logs import AuditLogService
 from app.services.errors import ConflictError, InvalidInputError, NotFoundError
 from app.services.notifications import NotificationService
 
@@ -102,10 +103,12 @@ class StudentVerificationService:
         verifications: StudentVerificationRepository,
         storage: FileStorage,
         notifications: NotificationService,
+        audit: AuditLogService | None = None,
     ) -> None:
         self.verifications = verifications
         self.storage = storage
         self.notifications = notifications
+        self.audit = audit
 
     def get_mine(self, tutor_id: UUID) -> TutorVerificationResponse | None:
         latest = self.verifications.get_latest_for_tutor(tutor_id)
@@ -154,6 +157,16 @@ class StudentVerificationService:
             )
             self.verifications.add(verification)
             locked_tutor.verification_status = VerificationStatus.PENDING
+            if self.audit is not None:
+                self.audit.record_transition(
+                    actor_id=tutor_id,
+                    entity="StudentVerification",
+                    entity_id=verification.id,
+                    action="Submit",
+                    from_status=None,
+                    to_status=VerificationStatus.PENDING,
+                    created_at=now,
+                )
             pending_emails = self.notifications.queue_for_active_admins(
                 NotificationType.MODERATION_QUEUE,
                 "Yêu cầu xác thực sinh viên mới",
@@ -228,6 +241,16 @@ class StudentVerificationService:
         self.verifications.update_tutor_verification_status(
             item.tutor_id, VerificationStatus.VERIFIED
         )
+        if self.audit is not None:
+            self.audit.record_transition(
+                actor_id=admin_id,
+                entity="StudentVerification",
+                entity_id=verification_id,
+                action="Approve",
+                from_status=VerificationStatus.PENDING,
+                to_status=VerificationStatus.VERIFIED,
+                created_at=now,
+            )
         pending_emails = self.notifications.queue_many(
             [item.tutor_id],
             NotificationType.MODERATION_RESULT,
@@ -258,6 +281,16 @@ class StudentVerificationService:
         self.verifications.update_tutor_verification_status(
             item.tutor_id, VerificationStatus.REJECTED
         )
+        if self.audit is not None:
+            self.audit.record_transition(
+                actor_id=admin_id,
+                entity="StudentVerification",
+                entity_id=verification_id,
+                action="Reject",
+                from_status=VerificationStatus.PENDING,
+                to_status=VerificationStatus.REJECTED,
+                created_at=now,
+            )
         pending_emails = self.notifications.queue_many(
             [item.tutor_id],
             NotificationType.MODERATION_RESULT,

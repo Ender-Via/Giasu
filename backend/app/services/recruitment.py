@@ -20,6 +20,7 @@ from app.schemas.recruitment import (
     TutorRequestResponse,
     TutorRequestUpsertRequest,
 )
+from app.services.audit_logs import AuditLogService, as_audit_service
 from app.services.errors import ConflictError, InvalidInputError, NotFoundError
 from app.services.notifications import NotificationService, PendingEmail
 
@@ -90,12 +91,12 @@ class RecruitmentService:
         self,
         repository: RecruitmentRepository,
         subjects: SubjectRepository,
-        audit: AuditLogRepository,
+        audit: AuditLogService | AuditLogRepository,
         notifications: NotificationService,
     ) -> None:
         self.repository = repository
         self.subjects = subjects
-        self.audit = audit
+        self.audit = as_audit_service(audit)
         self.notifications = notifications
 
     def list_students(self, parent_id: UUID) -> list[StudentResponse]:
