@@ -7,4 +7,6 @@ class SubjectService:
         self.repository = repository
 
     def list_subjects(self) -> list[SubjectResponse]:
-        return [SubjectResponse(id=s.id, name=s.name) for s in self.repository.list_all()]
+        return [
+            SubjectResponse(id=s.id, name=s.name, code=s.code) for s in self.repository.list_all()
+        ]

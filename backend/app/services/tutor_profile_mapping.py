@@ -28,7 +28,7 @@ def _profile_fields(profile: TutorProfile) -> dict[str, object]:
     return {
         "id": profile.id,
         "title": profile.title,
-        "subjects": [SubjectResponse(id=s.id, name=s.name) for s in profile.subjects],
+        "subjects": [SubjectResponse(id=s.id, name=s.name, code=s.code) for s in profile.subjects],
         "educationLevel": profile.education_level,
         "teachingMode": profile.teaching_mode,
         "province": profile.province,

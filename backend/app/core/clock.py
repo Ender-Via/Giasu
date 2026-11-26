@@ -6,7 +6,9 @@ def utc_now() -> datetime:
 
 
 def as_utc(value: datetime) -> datetime:
-    return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def as_utc_or_none(value: datetime | None) -> datetime | None:

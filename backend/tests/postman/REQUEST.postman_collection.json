@@ -1,0 +1,564 @@
+{
+  "info": {
+    "name": "REQUEST — Học sinh và tin tìm gia sư (S03-03, FR-05, UC-14)",
+    "description": "Chạy trên backend và PostgreSQL test. Điền bearer token của hai phụ huynh khác nhau và một gia sư, cùng mã môn có trong danh mục. Bộ ca tạo một học sinh và một tin chờ duyệt trên tài khoản test.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5015",
+      "type": "string"
+    },
+    {
+      "key": "parentToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otherParentToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tutorToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subjectId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Học sinh",
+      "item": [
+        {
+          "name": "AC-REQUEST-01 — Thêm học sinh",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/students",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \" Nguyễn Minh An \",\n  \"gradeLevel\": 9\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"studentId\", pm.response.json().data.id);",
+                  "pm.test(\"Bỏ khoảng trắng hai đầu\", () => pm.expect(pm.response.json().data.fullName).to.equal(\"Nguyễn Minh An\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-01 — Sửa lớp",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Minh An\",\n  \"gradeLevel\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "pm.test(\"Lớp đã cập nhật\", () => pm.expect(pm.response.json().data.gradeLevel).to.equal(10));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-01 — Danh sách học sinh",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/students/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "pm.test(\"Có học sinh vừa thêm\", () => pm.expect(pm.response.json().data.some(x => x.id === pm.collectionVariables.get(\"studentId\"))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-02 — Lớp ngoài miền giá trị",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/students",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \" Nguyễn Minh An \",\n  \"gradeLevel\": 13\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));",
+                  "pm.test(\"Lỗi trường lớp\", () => pm.expect(pm.response.json().errors.join(\" \")).to.include(\"Lớp\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-03 — Gia sư không được thêm học sinh",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tutorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/students",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \" Nguyễn Minh An \",\n  \"gradeLevel\": 9\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tin tìm gia sư",
+      "item": [
+        {
+          "name": "AC-REQUEST-03 — Không đăng cho học sinh của người khác",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherParentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"subjectId\": {{subjectId}},\n  \"educationLevel\": \"UpperSecondary\",\n  \"teachingMode\": \"Offline\",\n  \"province\": \"TP. Hồ Chí Minh\",\n  \"ward\": \"Phường Bến Thành\",\n  \"sessionsPerWeek\": 2,\n  \"minFee\": 150000,\n  \"maxFee\": 250000,\n  \"requirements\": \"Dạy tối thứ 3 và thứ 6.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-04 — Đăng tin và chờ duyệt",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"subjectId\": {{subjectId}},\n  \"educationLevel\": \"UpperSecondary\",\n  \"teachingMode\": \"Offline\",\n  \"province\": \"TP. Hồ Chí Minh\",\n  \"ward\": \"Phường Bến Thành\",\n  \"sessionsPerWeek\": 2,\n  \"minFee\": 150000,\n  \"maxFee\": 250000,\n  \"requirements\": \"Dạy tối thứ 3 và thứ 6.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"requestId\", pm.response.json().data.id);",
+                  "pm.test(\"Tin chờ duyệt và chưa có hạn\", () => {const data = pm.response.json().data; pm.expect(data.status).to.equal(\"PendingReview\"); pm.expect(data.expiresAtUtc).to.equal(null);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-05 — Học phí đảo ngược",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"subjectId\": {{subjectId}},\n  \"educationLevel\": \"UpperSecondary\",\n  \"teachingMode\": \"Offline\",\n  \"province\": \"TP. Hồ Chí Minh\",\n  \"ward\": \"Phường Bến Thành\",\n  \"sessionsPerWeek\": 2,\n  \"minFee\": 150000,\n  \"maxFee\": 100000,\n  \"requirements\": \"Dạy tối thứ 3 và thứ 6.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));",
+                  "pm.test(\"Lỗi khoảng học phí\", () => pm.expect(pm.response.json().errors.join(\" \")).to.include(\"Học phí\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FR-05 — Danh sách có lọc",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests/mine?status=PendingReview&studentId={{studentId}}&page=1&pageSize=20"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "pm.test(\"Có tin vừa gửi\", () => pm.expect(pm.response.json().data.items.some(x => x.id === pm.collectionVariables.get(\"requestId\"))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FR-05 — Xem chi tiết tin của mình",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "pm.test(\"Đúng tin và học sinh\", () => pm.expect(pm.response.json().data.studentId).to.equal(pm.collectionVariables.get(\"studentId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FR-05 — Sửa tin đang chờ duyệt",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"subjectId\": {{subjectId}},\n  \"educationLevel\": \"UpperSecondary\",\n  \"teachingMode\": \"Offline\",\n  \"province\": \"TP. Hồ Chí Minh\",\n  \"ward\": \"Phường Bến Thành\",\n  \"sessionsPerWeek\": 2,\n  \"minFee\": 150000,\n  \"maxFee\": 275000,\n  \"requirements\": \"Dạy tối thứ 3 và thứ 6.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(true));",
+                  "pm.test(\"Giữ trạng thái chờ duyệt\", () => pm.expect(pm.response.json().data.status).to.equal(\"PendingReview\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-09 — Tin chờ duyệt chưa đóng được",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{parentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}/close"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AC-REQUEST-10 — Không xem tin của người khác",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherParentToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"ApiResponse\", () => pm.expect(pm.response.json().success).to.equal(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
