@@ -66,6 +66,7 @@ erDiagram
     subjects {
         smallint id PK
         text name UK
+        text code UK "SUB-<id>"
     }
     tutor_profiles {
         uuid id PK
@@ -114,12 +115,14 @@ erDiagram
         uuid id PK
         uuid parent_id FK
         text full_name
+        smallint grade_level
     }
     tutor_requests {
         uuid id PK
         uuid parent_id FK
         uuid student_id FK
         smallint subject_id FK
+        text title "tùy chọn"
         text status
         timestamptz expires_at
         uuid reviewed_by FK
@@ -299,7 +302,7 @@ chốt một migration riêng nếu muốn hợp nhất hai UUID; không thực 
 | :-- | :-- | :-- |
 | `tutors` | `user_id uuid` PK, FK `users.id` · `phone text` · `verification_status text` mặc định `Unverified` · `reputation_score numeric(5,2)` null = chưa tính | `ck_tutors_phone`: `^0[0-9]{9}$` (BR-01) · `verification_status` ∈ §2.2 business-rules · `reputation_score` 0–100 (D30) |
 | `parents` | `user_id uuid` PK, FK `users.id` · `phone text` · `reputation_score numeric(5,2)` | như `tutors` |
-| `subjects` | `id smallint` PK (không tự tăng) · `name text` | `ux`: `name` unique; seed 22 môn (Toán, Tiếng Việt, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Sinh học, Khoa học tự nhiên, Lịch sử, Địa lý, Tin học, Tiếng Trung, Tiếng Nhật, Tiếng Hàn, Tiếng Pháp, IELTS, TOEIC, Luyện chữ đẹp, Vẽ, Piano, Guitar, Lập trình) |
+| `subjects` | `id smallint` PK (không tự tăng) · `name text` · `code text` (sinh từ `id` theo mẫu `SUB-<id>` trong migration `0010_recruitment_ooad_fields`) | `name` và `code` unique; seed 22 môn (Toán, Tiếng Việt, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Sinh học, Khoa học tự nhiên, Lịch sử, Địa lý, Tin học, Tiếng Trung, Tiếng Nhật, Tiếng Hàn, Tiếng Pháp, IELTS, TOEIC, Luyện chữ đẹp, Vẽ, Piano, Guitar, Lập trình) |
 
 `tutors`/`parents` được tạo cùng `users` khi đăng ký (S01-04, FR-01). Thêm môn mới bằng migration
 với `id` kế tiếp, không sửa hay xóa môn đã có (FK `RESTRICT` từ hồ sơ và tin).
@@ -324,7 +327,7 @@ Người làm module tạo migration theo đúng bảng dưới đây; cột nà
 | :-- | :-- | :-- | :-- |
 | `students` | `id`, `parent_id`, `full_name`, `grade_level` (1–12, lớp đang học), `created_at` | N–1 `parents` | REQUEST |
 | `student_verifications` | `id`, `tutor_id`, `university`, `student_code`, `evidence_file_ref`, `status`, `reject_reason`, `reviewed_by`, `reviewed_at`, `created_at`; unique (`tutor_id`) `WHERE status = 'Pending'` | N–1 `tutors`; `reviewed_by` N–1 `users` | VERIFY |
-| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `education_level`, `teaching_mode`, `province`, `ward`, `address` (ba cột này `null` khi `Online`), `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `submitted_at`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` | N–1 `parents`, `students`, `subjects`; `reviewed_by` N–1 `users` | REQUEST |
+| `tutor_requests` | `id`, `parent_id`, `student_id`, `subject_id`, `title` (tùy chọn, tối đa 150 ký tự), `education_level`, `teaching_mode`, `province`, `ward`, `address` (ba cột này `null` khi `Online`), `sessions_per_week`, `min_fee`, `max_fee`, `requirements`, `status`, `reject_reason`, `expires_at`, `submitted_at`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` | N–1 `parents`, `students`, `subjects`; FK ghép `(parent_id, student_id)` bảo đảm học sinh thuộc chủ tin; `reviewed_by` N–1 `users` | REQUEST |
 | `saved_tutor_requests` | `tutor_id`, `request_id` (PK ghép), `saved_at` | N–N | SEARCH |
 | `tutor_applications` | `id`, `request_id`, `tutor_id`, `profile_id`, `introduction`, `status`, `trial_scheduled_at`, `trial_note`, `created_at`, `updated_at` | N–1 `tutor_requests`, `tutors`, `tutor_profiles`; unique (`request_id`, `tutor_id`) `WHERE status IN ('Pending', 'Viewed', 'TrialInvited')` | APPLY |
 | `conversations` | `id`, `application_id` (unique), `created_at` | 1–1 `tutor_applications` | CHAT |

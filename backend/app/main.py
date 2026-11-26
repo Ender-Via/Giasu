@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.auth import router as auth_router
 from app.api.errors import register_service_error_handlers
 from app.api.notifications import router as notifications_router
+from app.api.recruitment import router as recruitment_router
 from app.api.student_verifications import router as student_verifications_router
 from app.api.subjects import router as subjects_router
 from app.api.tutor_profile_evidences import router as tutor_profile_evidences_router
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
 
     application.include_router(auth_router)
     application.include_router(notifications_router)
+    application.include_router(recruitment_router)
     application.include_router(student_verifications_router)
     application.include_router(subjects_router)
     application.include_router(tutor_profiles_router)
