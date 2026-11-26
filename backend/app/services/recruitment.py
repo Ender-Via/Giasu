@@ -177,6 +177,7 @@ class RecruitmentService:
             user, parent = self.repository.get_parent_contact(request.parent_id)
             return TutorRequestAdminResponse(
                 **detail.model_dump(),
+                reviewedByName=request.reviewer.full_name if request.reviewer is not None else None,
                 parent=RequestParentResponse(
                     id=user.id,
                     fullName=user.full_name,

@@ -1,0 +1,119 @@
+{
+  "info": {
+    "name": "ADMIN-REVIEW — Admin duyệt hồ sơ và tin (S03-01, FR-04, FR-06)",
+    "description": "Chạy trên backend và PostgreSQL test. Điền bearer token cho Admin, Gia sư và Phụ huynh.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5015", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "tutorToken", "value": "", "type": "string" },
+    { "key": "parentToken", "value": "", "type": "string" },
+    { "key": "profileId", "value": "", "type": "string" },
+    { "key": "requestId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Hồ sơ gia sư (FR-04)",
+      "item": [
+        {
+          "name": "AC-ADMIN-REVIEW-01 — Danh sách hồ sơ chờ duyệt (200)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-profiles?status=PendingReview&page=1&pageSize=20"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-01 — Lọc trạng thái Draft bị chặn (400)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-profiles?status=Draft"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-02 — Admin xem chi tiết hồ sơ (200)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-profiles/{{profileId}}"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-02 — Admin duyệt hồ sơ (200)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-profiles/{{profileId}}/approve"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-03 — Từ chối hồ sơ thiếu lý do (400)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"reason\": \"   \" }" },
+            "url": "{{baseUrl}}/api/tutor-profiles/{{profileId}}/reject"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-07 — Gia sư duyệt hồ sơ bị chặn (403)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tutorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-profiles/{{profileId}}/approve"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tin tìm gia sư (FR-06)",
+      "item": [
+        {
+          "name": "AC-ADMIN-REVIEW-05 — Danh sách tin chờ duyệt (200)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-requests?status=PendingReview&page=1&pageSize=20"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-05 — Admin xem chi tiết tin (200)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-05 — Admin duyệt tin (200)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}/approve"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-06 — Từ chối tin có lý do (200)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"reason\": \"Tin yêu cầu phí nhận lớp, vi phạm quy chế.\" }" },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}/reject"
+          }
+        },
+        {
+          "name": "AC-ADMIN-REVIEW-07 — Phụ huynh duyệt tin bị chặn (403)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{parentToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/tutor-requests/{{requestId}}/approve"
+          }
+        }
+      ]
+    }
+  ]
+}

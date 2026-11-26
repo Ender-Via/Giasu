@@ -10,6 +10,7 @@ class TutorRequestStatus:
     HIRED: Final = "Hired"
     CLOSED: Final = "Closed"
 
+    ALL: Final = (PENDING_REVIEW, REJECTED, RECRUITING, HIRED, CLOSED)
     EDITABLE: Final = (PENDING_REVIEW, REJECTED, RECRUITING)
 
 

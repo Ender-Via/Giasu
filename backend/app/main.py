@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.admin_review import router as admin_review_router
 from app.api.auth import router as auth_router
 from app.api.errors import register_service_error_handlers
 from app.api.notifications import router as notifications_router
@@ -94,6 +95,7 @@ def create_app() -> FastAPI:
     application.include_router(subjects_router)
     application.include_router(tutor_profiles_router)
     application.include_router(tutor_profile_evidences_router)
+    application.include_router(admin_review_router)
     return application
 
 
