@@ -29,9 +29,26 @@ export function useNotifications(unreadOnly: boolean, page: number) {
         "/api/notifications",
         { params: { unreadOnly, page, pageSize: NOTIFICATIONS_PAGE_SIZE } }
       );
-      return (
-        res.data.data ?? { items: [], page, pageSize: NOTIFICATIONS_PAGE_SIZE, totalCount: 0 }
-      );
+      const result =
+        res.data.data ?? { items: [], page, pageSize: NOTIFICATIONS_PAGE_SIZE, totalCount: 0 };
+      const totalPages = Math.max(1, Math.ceil(result.totalCount / NOTIFICATIONS_PAGE_SIZE));
+      // Dữ liệu vừa co lại khiến trang đang xem vượt quá tổng số trang: tải ngay trang cuối
+      // hợp lệ (frontend-conventions.md §3.4) để không bị kẹt ở trang rỗng.
+      if (page > totalPages) {
+        const fallbackRes = await apiClient.get<ApiResponse<NotificationPageResponse>>(
+          "/api/notifications",
+          { params: { unreadOnly, page: totalPages, pageSize: NOTIFICATIONS_PAGE_SIZE } }
+        );
+        return (
+          fallbackRes.data.data ?? {
+            items: [],
+            page: totalPages,
+            pageSize: NOTIFICATIONS_PAGE_SIZE,
+            totalCount: result.totalCount,
+          }
+        );
+      }
+      return result;
     },
     placeholderData: keepPreviousData,
   });

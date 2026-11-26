@@ -32,7 +32,10 @@ export default function NotificationsScreen() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const unreadOnly = filter === "unread";
-  const { data, isPending, isError, error, refetch } = useNotifications(unreadOnly, page);
+  const { data, isPending, isError, isFetching, error, refetch } = useNotifications(
+    unreadOnly,
+    page
+  );
   const { data: unreadCount } = useUnreadCount();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
@@ -40,6 +43,7 @@ export default function NotificationsScreen() {
   const settingsHref = user ? `/${user.role.toLowerCase()}/notifications/settings` : "#";
   const unread = unreadCount ?? 0;
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / NOTIFICATIONS_PAGE_SIZE)) : 1;
+  const displayPage = Math.min(page, totalPages);
 
   function changeFilter(next: Filter) {
     setFilter(next);
@@ -50,16 +54,26 @@ export default function NotificationsScreen() {
   function openNotification(item: NotificationResponse) {
     setActionError(null);
     if (!item.isRead) {
+      const shouldStepBackPage =
+        unreadOnly && !item.link && data !== undefined && data.items.length <= 1 && page > 1;
       markRead.mutate(item.id, {
+        onSuccess: () => {
+          if (shouldStepBackPage) {
+            setPage((current) => Math.max(1, current - 1));
+          }
+        },
         onError: (err) => setActionError(toApiError(err).message),
       });
     }
-    if (item.link) router.push(item.link);
+    if (item.link && item.link.startsWith("/")) router.push(item.link);
   }
 
   function readAll() {
     setActionError(null);
     markAllRead.mutate(undefined, {
+      onSuccess: () => {
+        if (unreadOnly) setPage(1);
+      },
       onError: (err) => setActionError(toApiError(err).message),
     });
   }
@@ -79,7 +93,10 @@ export default function NotificationsScreen() {
           >
             Đánh dấu đã đọc tất cả
           </Button>
-          <Link href={settingsHref} className="text-sm font-semibold text-primary hover:underline">
+          <Link
+            href={settingsHref}
+            className="inline-flex min-h-11 sm:min-h-0 items-center text-sm font-semibold text-primary hover:underline"
+          >
             Cài đặt email →
           </Link>
         </div>
@@ -109,10 +126,12 @@ export default function NotificationsScreen() {
         />
       ) : (
         <>
-          {isError ? (
-            <p role="status" className="rounded-2xl border border-amber-200 bg-amber-100 p-3 text-sm font-semibold text-amber-800">
-              Không tải lại được thông báo, đang hiện dữ liệu cũ.
-            </p>
+          {isError && !isFetching ? (
+            <ErrorAlert
+              title="Không làm mới được thông báo"
+              message={toApiError(error).message}
+              onRetry={() => void refetch()}
+            />
           ) : null}
 
           {data.items.length === 0 ? (
@@ -133,7 +152,7 @@ export default function NotificationsScreen() {
           {/* [5] Phân trang ở server, 20/trang */}
           {data.totalCount > NOTIFICATIONS_PAGE_SIZE ? (
             <Pagination
-              currentPage={page}
+              currentPage={displayPage}
               totalPages={totalPages}
               onPageChange={setPage}
               totalItems={data.totalCount}

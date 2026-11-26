@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUnreadCount } from "@/lib/notifications-api";
@@ -12,10 +12,14 @@ const REFRESH_INTERVAL_MS = 60_000;
 // và khi đổi trang; 0 thì không hiện số, > 99 hiện "99+". Lỗi tải chỉ ẩn số, chuông vẫn bấm được.
 export function NotificationBell({ href }: { href: string }) {
   const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
   const { data: count, refetch } = useUnreadCount(REFRESH_INTERVAL_MS);
 
   useEffect(() => {
-    void refetch();
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      void refetch();
+    }
   }, [pathname, refetch]);
 
   const unread = count ?? 0;
@@ -26,7 +30,7 @@ export function NotificationBell({ href }: { href: string }) {
     <Link
       href={href}
       aria-label={label}
-      className="relative p-2 rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"
+      className="relative inline-flex items-center justify-center min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"
     >
       <Icons.Bell />
       {unread > 0 ? (

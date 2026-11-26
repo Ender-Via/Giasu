@@ -28,7 +28,7 @@ const SAVED_MESSAGE = "Đã lưu cài đặt email.";
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { data, isPending, error, refetch } = useNotificationPreferences();
+  const { data, isPending, isError, isFetching, error, refetch } = useNotificationPreferences();
   const updatePreferences = useUpdateNotificationPreferences();
 
   // Thay đổi chưa lưu, theo loại; null = chưa đổi gì
@@ -36,6 +36,7 @@ export default function NotificationSettingsScreen() {
   const [saveError, setSaveError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const notificationsHref = user ? `/${user.role.toLowerCase()}/notifications` : "/";
 
@@ -47,14 +48,45 @@ export default function NotificationSettingsScreen() {
     (item) => draft?.[item.type] !== undefined && draft[item.type] !== item.emailEnabled
   );
 
-  // Hỏi trước khi đóng tab hay tải lại khi có thay đổi chưa lưu (ui-screens.md §4.3)
+  // Hỏi trước khi đóng tab, tải lại hoặc bấm liên kết rời trang khi có thay đổi chưa lưu (ui-screens.md §4.3)
   useEffect(() => {
     if (!isDirty) return;
-    const handler = (event: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    const handleClickCapture = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const anchor = (event.target as Element | null)?.closest("a[href]") as
+        | HTMLAnchorElement
+        | null;
+      if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) {
+        return;
+      }
+      const targetUrl = new URL(anchor.href, window.location.href);
+      if (targetUrl.origin !== window.location.origin) return;
+      if (targetUrl.pathname + targetUrl.search === window.location.pathname + window.location.search) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      setPendingHref(targetUrl.pathname + targetUrl.search + targetUrl.hash);
+      setLeaveOpen(true);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("click", handleClickCapture, true);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("click", handleClickCapture, true);
+    };
   }, [isDirty]);
 
   useEffect(() => {
@@ -70,6 +102,7 @@ export default function NotificationSettingsScreen() {
 
   function leave() {
     if (isDirty) {
+      setPendingHref(null);
       setLeaveOpen(true);
       return;
     }
@@ -94,7 +127,7 @@ export default function NotificationSettingsScreen() {
         <button
           type="button"
           onClick={leave}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline cursor-pointer"
+          className="inline-flex min-h-11 sm:min-h-0 items-center gap-1 text-sm font-semibold text-primary hover:underline cursor-pointer"
         >
           <Icons.ChevronLeft />
           Thông báo
@@ -123,66 +156,82 @@ export default function NotificationSettingsScreen() {
           message="Vai trò của bạn chưa có loại thông báo nào gửi qua email."
         />
       ) : (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-          className="rounded-3xl border border-slate-200/90 bg-surface-container-lowest p-4 sm:p-6 shadow-sm space-y-4"
-        >
-          {saveError ? <ApiErrorAlert error={saveError} /> : null}
+        <>
+          {isError && !isFetching ? (
+            <ErrorAlert
+              title="Không làm mới được cài đặt email"
+              message={toApiError(error).message}
+              onRetry={() => void refetch()}
+            />
+          ) : null}
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save();
+            }}
+            className="rounded-3xl border border-slate-200/90 bg-surface-container-lowest p-4 sm:p-6 shadow-sm space-y-4"
+          >
+            {saveError ? <ApiErrorAlert error={saveError} /> : null}
 
-          {/* [1] Danh sách loại thông báo của vai trò */}
-          <ul className="divide-y divide-slate-200/80">
-            {items.map((item) => (
-              <li key={item.type} className="flex items-center justify-between gap-4 py-3">
-                <span id={`pref-${item.type}`} className="text-sm font-medium text-on-surface">
-                  {NOTIFICATION_TYPE_LABELS[item.type] ?? item.type}
-                </span>
-                <EmailSwitch
-                  labelledBy={`pref-${item.type}`}
-                  checked={item.emailEnabled}
-                  disabled={updatePreferences.isPending}
-                  onChange={(value) => toggle(item.type, value)}
-                />
-              </li>
-            ))}
-          </ul>
+            {/* [1] Danh sách loại thông báo của vai trò */}
+            <ul className="divide-y divide-slate-200/80">
+              {items.map((item) => (
+                <li key={item.type} className="flex items-center justify-between gap-4 py-3">
+                  <span id={`pref-${item.type}`} className="text-sm font-medium text-on-surface">
+                    {NOTIFICATION_TYPE_LABELS[item.type] ?? item.type}
+                  </span>
+                  <EmailSwitch
+                    labelledBy={`pref-${item.type}`}
+                    checked={item.emailEnabled}
+                    disabled={updatePreferences.isPending}
+                    onChange={(value) => toggle(item.type, value)}
+                  />
+                </li>
+              ))}
+            </ul>
 
-          {/* [2] Hủy / Lưu */}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={leave}
-              disabled={updatePreferences.isPending}
-              className="min-h-11 sm:min-h-0"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={updatePreferences.isPending}
-              disabled={!isDirty}
-              className="min-h-11 sm:min-h-0"
-            >
-              Lưu
-            </Button>
-          </div>
-        </form>
+            {/* [2] Hủy / Lưu */}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={leave}
+                disabled={updatePreferences.isPending}
+                className="min-h-11 sm:min-h-0"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={updatePreferences.isPending}
+                disabled={!isDirty}
+                className="min-h-11 sm:min-h-0"
+              >
+                Lưu
+              </Button>
+            </div>
+          </form>
+        </>
       )}
 
       <ConfirmDialog
         isOpen={leaveOpen}
-        onClose={() => setLeaveOpen(false)}
-        onConfirm={() => {
+        onClose={() => {
           setLeaveOpen(false);
-          router.push(notificationsHref);
+          setPendingHref(null);
         }}
+        onConfirm={() => {
+          const target = pendingHref ?? notificationsHref;
+          setLeaveOpen(false);
+          setPendingHref(null);
+          router.push(target);
+        }}
+        variant="warning"
         title="Rời trang?"
         message={UNSAVED_MESSAGE}
         confirmText="Rời trang"
+        cancelText="Ở lại"
       />
     </div>
   );
