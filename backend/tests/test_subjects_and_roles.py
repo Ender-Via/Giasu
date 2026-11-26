@@ -12,9 +12,11 @@ async def test_danh_muc_mon_tra_dung_thu_tu_cho_moi_vai_tro(  # BR-24
         response = await client.get("/api/subjects", headers=account.headers)
 
         assert response.status_code == 200
-        names = [item["name"] for item in response.json()["data"]]
+        items = response.json()["data"]
+        names = [item["name"] for item in items]
         assert names[:4] == ["Toán", "Tiếng Việt", "Ngữ văn", "Tiếng Anh"]
         assert len(names) == len(subjects)
+        assert [item["code"] for item in items] == [f"SUB-{item['id']}" for item in items]
 
 
 async def test_danh_muc_mon_khong_co_token_thi_401(client: AsyncClient) -> None:  # AC-AUTH-07
