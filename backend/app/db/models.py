@@ -170,6 +170,8 @@ class TutorRequest(Base):
 
     student: Mapped[Student] = relationship()
     subject: Mapped[Subject] = relationship()
+    parent: Mapped[Parent] = relationship(foreign_keys=[parent_id], overlaps="student")
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
 
 
 class TutorApplication(Base):
@@ -291,6 +293,8 @@ class TutorProfile(Base):
         back_populates="profile",
         order_by="(TutorProfileEvidence.created_at, TutorProfileEvidence.id)",
     )
+    tutor: Mapped[Tutor] = relationship(foreign_keys=[tutor_id])
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
 
 
 class TutorProfileEvidence(Base):

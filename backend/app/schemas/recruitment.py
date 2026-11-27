@@ -197,6 +197,7 @@ class RequestParentResponse(BaseModel):
 
 
 class TutorRequestAdminResponse(TutorRequestResponse):
+    reviewedByName: str | None = None
     parent: RequestParentResponse
 
 

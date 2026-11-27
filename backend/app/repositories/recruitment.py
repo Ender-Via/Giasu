@@ -73,7 +73,15 @@ class RecruitmentRepository:
         recruiting_only: bool = False,
         for_update: bool = False,
     ) -> TutorRequest | None:
-        statement = select(TutorRequest).where(TutorRequest.id == request_id)
+        statement = (
+            select(TutorRequest)
+            .where(TutorRequest.id == request_id)
+            .options(
+                selectinload(TutorRequest.student),
+                selectinload(TutorRequest.subject),
+                selectinload(TutorRequest.reviewer),
+            )
+        )
         if parent_id is not None:
             statement = statement.where(TutorRequest.parent_id == parent_id)
         if recruiting_only:
