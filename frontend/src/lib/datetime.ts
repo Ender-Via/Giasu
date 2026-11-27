@@ -154,3 +154,15 @@ export function formatVietnamDateTime(utcDateStr: string): string {
     return utcDateStr;
   }
 }
+
+// Thời điểm của thông báo: trong 24 giờ hiện tương đối ("Vừa xong", "5 phút trước", "3 giờ
+// trước"), cũ hơn hiện dd/MM/yyyy HH:mm (ui-screens.md §4.4)
+export function formatNotificationTime(utcIso: string, now: number = Date.now()): string {
+  const diffMs = now - new Date(utcIso).getTime();
+  if (Number.isNaN(diffMs)) return utcIso;
+  const minutes = Math.floor(diffMs / 60_000);
+  if (diffMs >= 0 && minutes < 1) return "Vừa xong";
+  if (diffMs >= 0 && minutes < 60) return `${minutes} phút trước`;
+  if (diffMs >= 0 && minutes < 24 * 60) return `${Math.floor(minutes / 60)} giờ trước`;
+  return formatVietnamDateTime(utcIso);
+}

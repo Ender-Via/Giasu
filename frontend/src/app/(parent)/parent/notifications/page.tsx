@@ -1,6 +1,6 @@
-import UnderConstruction from "@/components/UnderConstruction";
+import NotificationsScreen from "@/components/screens/NotificationsScreen";
 
-// UC-11 — thay khung này bằng màn hình thật khi làm thẻ FE tương ứng.
+// SCR-COM-01 — Thông báo (FR-32)
 export default function NotificationsPage() {
-  return <UnderConstruction pageTitle="Thông báo" />;
+  return <NotificationsScreen />;
 }

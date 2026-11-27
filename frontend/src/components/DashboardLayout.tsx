@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import type { Role } from "@/types/auth";
 import { Icons } from "./Icons";
+import { NotificationBell } from "./NotificationBell";
 
 export interface NavItem {
   label: string;
@@ -145,6 +146,8 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3 lg:gap-6">
+            {user ? <NotificationBell href={`/${user.role.toLowerCase()}/notifications`} /> : null}
+
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-surface-container-low text-primary flex items-center justify-center font-bold">
                 {avatarLetter}
